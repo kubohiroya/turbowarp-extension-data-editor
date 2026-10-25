@@ -6,3 +6,8 @@ nav .source{display:inline-flex;align-items:center;justify-content:center;width:
 nav .source:hover{background:var(--soft)}
 nav .source img{display:block}
 @media(max-width:560px){.header{height:auto;min-height:76px;padding:16px 0;gap:14px;flex-wrap:wrap}nav{margin-left:auto}}
+
+:root{color-scheme:light dark}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#e7eaf2;--muted:#9aa6b8;--line:#2a313b;--soft:#1a1f27;background:#12141a}
+}
