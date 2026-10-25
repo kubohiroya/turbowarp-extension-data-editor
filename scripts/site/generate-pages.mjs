@@ -40,7 +40,10 @@ export async function generatePages(output, revision, coreRevision, {siteRevisio
 <section class="section"><h2>${escape(text.featuresHeading)}</h2><div class="features">${text.features.map(([title, description], index) => `<article><span class="number">0${index + 1}</span><h3>${escape(title)}</h3><p>${escape(description)}</p></article>`).join('')}</div></section>
 <section class="section try" id="try"><div><h2>${escape(text.tryHeading)}</h2><p class="intro">${escape(text.tryIntro)}</p><a class="button" href="${editor}">${escape(text.open)}</a></div><div><ol class="steps">${text.steps.map(step => `<li>${escape(step)}</li>`).join('')}</ol><label class="small" for="extension-url">${escape(text.urlLabel)}</label><div class="extension-url"><input id="extension-url" data-extension-url readonly value="../static/extensions/block-editor.js"><button type="button" data-copy-extension>${escape(text.copy)}</button></div><textarea data-extension-source hidden readonly aria-label="Sample extension source"></textarea><p class="notice">${escape(text.limits)}</p></div></section>
 <section class="section"><div class="credits"><h2>${escape(text.creditsHeading)}</h2>${credits}</div></section></main>
-<footer class="footer"><div>${escape(text.footer)}<br>${escape(text.languageNote)}</div><div>${escape(text.build)} <a href="${source}"><code>${revision.slice(0, 7)}</code></a><a href="https://github.com/kubohiroya/turbowarp-extension-data-editor/issues">${escape(text.issues)}</a></div></footer></div></body></html>`;
+<footer class="footer"><div>${escape(text.footer)}<br>${escape(text.languageNote)}</div><div>${escape(text.build)} <a href="${source}"><code>${revision.slice(0, 7)}</code></a><a href="https://github.com/kubohiroya/turbowarp-extension-data-editor/issues">${escape(text.issues)}</a></div></footer></div>
+<!-- The shared TurboWarp Plus header. It inserts itself at the top of the page in a shadow root. -->
+<script type="module" src="https://kubohiroya.github.io/turbowarp-plus-site-header/dist/auto.js"></script>
+</body></html>`;
         await fs.mkdir(path.join(output, language), {recursive: true});
         await fs.writeFile(path.join(output, language, 'index.html'), html);
     }
