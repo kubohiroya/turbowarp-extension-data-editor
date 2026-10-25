@@ -9,33 +9,33 @@ importers:
   .:
     dependencies:
       '@rjsf/core':
-        specifier: 5.24.13
+        specifier: ^5.24.13
         version: 5.24.13(@rjsf/utils@5.24.13(react@16.14.0))(react@16.14.0)
       '@rjsf/utils':
-        specifier: 5.24.13
+        specifier: ^5.24.13
         version: 5.24.13(react@16.14.0)
       '@rjsf/validator-ajv8':
-        specifier: 5.24.13
+        specifier: ^5.24.13
         version: 5.24.13(@rjsf/utils@5.24.13(react@16.14.0))
       ajv:
-        specifier: 8.20.0
+        specifier: ^8.20.0
         version: 8.20.0
       ajv-formats:
-        specifier: 2.1.1
+        specifier: ^2.1.1
         version: 2.1.1(ajv@8.20.0)
       fast-uri:
-        specifier: 3.1.9
+        specifier: ^3.1.9
         version: 3.1.9
       yaml:
         specifier: ^2.9.1
         version: 2.9.1
     devDependencies:
       '@playwright/test':
-        specifier: 1.64.1
+        specifier: ^1.64.1
         version: 1.64.1
       '@turbowarp/jszip':
-        specifier: 3.11.1
-        version: 3.11.1
+        specifier: ^3.12.0
+        version: 3.12.0
       '@types/react':
         specifier: ^16.14.70
         version: 16.14.70
@@ -43,19 +43,19 @@ importers:
         specifier: ^16.9.25
         version: 16.9.25(@types/react@16.14.70)
       esbuild:
-        specifier: 0.28.2
+        specifier: ^0.28.2
         version: 0.28.2
       jsdom:
-        specifier: 26.1.0
+        specifier: ^26.1.0
         version: 26.1.0
       react:
-        specifier: 16.14.0
+        specifier: ^16.14.0
         version: 16.14.0
       react-dom:
-        specifier: 16.14.0
+        specifier: ^16.14.0
         version: 16.14.0(react@16.14.0)
       typescript:
-        specifier: 6.0.3
+        specifier: ^6.0.3
         version: 6.0.3
 
 packages:
@@ -271,8 +271,8 @@ packages:
     peerDependencies:
       '@rjsf/utils': ^5.24.x
 
-  '@turbowarp/jszip@3.11.1':
-    resolution: {integrity: sha512-1tWXTxAac1T/g0VHC9lIY0Ij7Qyt7sORIaAT4L0/Y+pjU1ZtXD9ti/+RnXzTVHXp6AM8fM2O3mF22/aSEVPXiQ==}
+  '@turbowarp/jszip@3.12.0':
+    resolution: {integrity: sha512-nTKFFc1rUToxTdxUKPIou3YKUsSelgEoyx4TAPzK/0BkGPntkenp9zoJOSnxnGWNchVXYVZv01+3aZwlS1K8hw==}
 
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
@@ -733,7 +733,7 @@ snapshots:
       lodash: 4.18.1
       lodash-es: 4.18.1
 
-  '@turbowarp/jszip@3.11.1':
+  '@turbowarp/jszip@3.12.0':
     dependencies:
       lie: 3.3.0
       pako: 1.0.11
