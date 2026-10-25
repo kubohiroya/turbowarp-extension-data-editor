@@ -1,6 +1,6 @@
 # 固定入力・native host・フォーム（S3-1〜S3-3）
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.md#標準動作とロールバック)に従ってください。
+現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
 
 この実装は固定入力の型・Schema検査・同期prepared境界と、明示的に有効化する標準field transactionを追加する。固定フォームとGUIの既定OFFフラグへ接続する。各拡張は正本Schema・codec・登録を所有し、共通基盤に特定用途のSchemaを内蔵しない。既存SOURCE編集、`apiVersion: 1`、既存8 exportsとCSS buildは維持する。
 

@@ -1,6 +1,6 @@
 # 固定Schemaを使うSource/Form編集
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.md#標準動作とロールバック)に従ってください。
+現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
 
 既存の`register`・`registerSchema`・`registerSchemaBundle`は変更しない。追加の`registerSourceEditor`は、ホスト提供APIでは任意、`createBlockEditorService()`の返す`SourceBlockEditorRegistrationAPI`では必須となる。既存の`SchemaBundleBlockEditorRegistrationAPI`を実装するホストに新メソッドを要求しない。公開入口は従来の8つを維持する。
 

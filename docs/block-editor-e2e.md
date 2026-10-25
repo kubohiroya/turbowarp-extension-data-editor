@@ -1,6 +1,6 @@
 # 専用エディターとsb3の継続E2E
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.md#標準動作とロールバック)に従ってください。
+現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
 
 運用の正本: [共通Issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26)。関連: [基盤・sb3のGUI Issue #12](https://github.com/kubohiroya/scratch-gui/issues/12)、[テーマ別invalid表示の共通Issue #12](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/12)。Playwright Testで同梱サンプルの読込、ブロック配置、アイコン起動、入力検証、保存、キャンセル、実際の `.sb3` の書出しと再読込を操作する。アプリやセキュリティ確認を差し替えず、内部VM APIでデータを投入しない。
 

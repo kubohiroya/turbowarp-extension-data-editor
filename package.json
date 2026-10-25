@@ -46,6 +46,7 @@
   "files": [
     "dist",
     "README.md",
+    "README.ja.md",
     "docs",
     "webpack4.cjs"
   ],

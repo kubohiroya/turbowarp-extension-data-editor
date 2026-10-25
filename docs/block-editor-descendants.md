@@ -1,6 +1,6 @@
 # 子孫ブロックの一括編集
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.md#標準動作とロールバック)に従ってください。
+現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
 
 対象は [scratch-gui Issue #2](https://github.com/kubohiroya/scratch-gui/issues/2)。
 共通基盤の[階層セッションAPI](descendants.md)へ接続します。

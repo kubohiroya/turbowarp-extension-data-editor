@@ -1,6 +1,6 @@
 # 拡張ブロック編集の接続と受け入れ確認
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.md#標準動作とロールバック)に従ってください。
+現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
 
 対象: [scratch-gui #1](https://github.com/kubohiroya/scratch-gui/issues/1)、依存: [共通 API #1](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/1)。
 基盤はPR #3で`develop`へ、YAML互換はPR #5、初版受け入れ修正はPR #6で`feat/site/github-pages`へ統合しました。
