@@ -26,10 +26,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
+          node-version-file: .nvmrc
+      - uses: pnpm/action-setup@v6
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Verify the completed schedule and its evidence
         id: verify
@@ -64,7 +62,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       - uses: actions/download-artifact@v4
         with:
           name: ci-weekly-report-${{ github.run_id }}-${{ github.run_attempt }}

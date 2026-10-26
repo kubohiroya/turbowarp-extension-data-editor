@@ -95,7 +95,7 @@ Real GUI traversal, hierarchical modals, batch Undo/Redo, and `.sb3` integration
 
 ## Local validation
 
-Use Node.js 22.18 or later and pnpm.
+Use Node.js 24 or later and pnpm.
 
 ```sh
 pnpm install

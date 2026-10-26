@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       - name: Verify latest attempts using isolated fixture and read-only observers
         env:
           GH_TOKEN: ${{ github.token }}
