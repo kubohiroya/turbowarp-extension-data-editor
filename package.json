@@ -51,10 +51,11 @@
     "webpack4.cjs"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
-  "packageManager": "pnpm@11.18.0",
+  "packageManager": "pnpm@11.28.8",
   "scripts": {
+    "check": "node --test test/ci/*.test.mjs && node --test test/site/*.test.cjs && pnpm typecheck && pnpm test && pnpm test:e2e:infrastructure",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-build-info.mjs",
     "test": "pnpm build && node --test test/*.test.mjs",

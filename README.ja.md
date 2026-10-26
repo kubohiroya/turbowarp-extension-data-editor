@@ -95,7 +95,7 @@ GUIにはライフサイクル・Modal/翻訳/テーマの接続を残します�
 
 ## ローカル検証
 
-Node.js 22.18 以降と pnpm を使用します。
+Node.js 24 以降と pnpm を使用します。
 
 ```sh
 pnpm install

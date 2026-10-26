@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
       - name: Require the latest matching normal CI to succeed
         env:
           GH_TOKEN: ${{ github.token }}
