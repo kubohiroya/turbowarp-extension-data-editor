@@ -24,7 +24,6 @@ jobs:
           node-version-file: .nvmrc
       - uses: pnpm/action-setup@v6
         with:
-          version: 11.18.0
           run_install: false
       - name: Verify main and pinned GUI CI
         id: source

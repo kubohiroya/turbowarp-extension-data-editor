@@ -33,7 +33,6 @@ jobs:
           node-version-file: .nvmrc
       - uses: pnpm/action-setup@v6
         with:
-          version: 11.18.0
           run_install: false
       - run: pnpm install --frozen-lockfile
       - name: Resolve expected deployment and pinned core
