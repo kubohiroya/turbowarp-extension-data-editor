@@ -14,7 +14,7 @@ const source = `// Name: ${name}\n// ID: securityfixture\n// Description: ${desc
     'color1:"#5B67A5",color2:"#4D588C",color3:"#404874",' +
     'blocks:[{opcode:"value",blockType:Scratch.BlockType.REPORTER,text:"security fixture"}]};},value(){return 1;}});';
 
-const projectURL = async ({required = true} = {}) => {
+const projectURL = async ({required = true, mixed = false} = {}) => {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360"></svg>';
     const assetId = createHash('md5').update(svg).digest('hex');
     const project = {targets: [{isStage:true,name:'Stage',variables:{},lists:{},broadcasts:{},comments:{},
@@ -25,6 +25,14 @@ const projectURL = async ({required = true} = {}) => {
         monitors:[],extensions:['securityfixture'],extensionURLs:{securityfixture:`data:text/javascript,${encodeURIComponent(
             required ? source : source.replace('// Unsandboxed: required\n',''))}`},
         meta:{semver:'3.0.0',vm:'0.2.0',agent:'shared-security-fixture'}};
+    if (mixed) {
+        const ordinarySource=source.replaceAll('securityfixture','securityordinary')
+            .replaceAll('__securityFixtureStarted','__securityOrdinaryStarted')
+            .replace('// Unsandboxed: required\n','');
+        project.extensions.push('securityordinary');
+        project.extensionURLs.securityordinary=`data:text/javascript,${encodeURIComponent(ordinarySource)}`;
+        project.targets[0].blocks.ordinary={...project.targets[0].blocks.fixture,opcode:'securityordinary_value',y:120};
+    }
     const zip = new JSZip();
     zip.file('project.json',JSON.stringify(project));zip.file(`${assetId}.svg`,svg);
     return `data:application/octet-stream;base64,${await zip.generateAsync({type:'base64',compression:'DEFLATE'})}`;
@@ -43,7 +51,7 @@ const open = async (page, language, options) => {
     target.searchParams.set('project_url',await projectURL(options));
     await page.goto(target.href);
     await expect(dialog(page)).toBeVisible();
-    await expect(dialog(page).locator('.twextsec-info')).toContainText(name);
+    await expect(dialog(page).locator('.twextsec-info').first()).toContainText(name);
 };
 
 test('direct editor URLs use shared security without adding a startup switch', async ({page,baseURL,evidence}) => {
@@ -52,6 +60,7 @@ test('direct editor URLs use shared security without adding a startup switch', a
     target.search = new URLSearchParams({lang:'ja',project_url:await projectURL()});
     await page.goto(target.href);
     await expect(dialog(page)).toBeVisible();
+    await expect(dialog(page).locator('input[value="unsandboxed"]')).toBeChecked();
     expect(new URL(page.url()).searchParams.has('extensionSecurityBatch')).toBe(false);
     expect(await executions(page)).toBe(0);
 });
@@ -75,7 +84,9 @@ for (const language of ['ja','en']) {
         await expect(dialog(page).locator('.twextsec-bulk button[value="deny"]')).toBeDisabled();
         await expect(dialog(page).locator('.twextsec-bulk button[value="sandboxed"]')).toBeDisabled();
         await expect(dialog(page).locator('.twextsec-bulk button[value="unsandboxed"]')).toBeEnabled();
-        await expect(dialog(page).locator('input:checked')).toHaveCount(0);
+        await expect(dialog(page).locator('input:checked')).toHaveCount(1);
+        await expect(dialog(page).locator('.twextsec-intro')).toContainText(
+            language==='ja'?'選択済み':'already selected');
         await expect(dialog(page).locator('.twextsec-info')).toContainText(language==='ja' ?
             'この拡張はサンドボックス内では動作しません。' : 'This extension cannot run inside the sandbox.');
         await expect(dialog(page).locator('label[data-mode="unsandboxed"]')).toContainText(
@@ -83,7 +94,7 @@ for (const language of ['ja','en']) {
         expect(await executions(page)).toBe(0);
         const mode = dialog(page).getByRole('radio',{name:`${name}: ${labels[language].mode}`,exact:true});
         await expect(mode).toBeEnabled();
-        await mode.check();
+        await expect(mode).toBeChecked();
         const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
         await expect(ok).toBeEnabled();
         const box = await ok.boundingBox();expect(box.y + box.height).toBeLessThanOrEqual(600);
@@ -104,7 +115,7 @@ for (const language of ['ja','en']) {
         evidence.stage('shared-security-cancel');
         await open(page,language);
         const mode = dialog(page).getByRole('radio',{name:`${name}: ${labels[language].mode}`,exact:true});
-        await mode.check();
+        await expect(mode).toBeChecked();
         await dialog(page).getByRole('button',{name:labels[language].cancel,exact:true}).click();
         await dialog(page).getByRole('button',{name:labels[language].no,exact:true}).click();
         await expect(mode).toBeChecked();expect(await executions(page)).toBe(0);
@@ -116,6 +127,25 @@ for (const language of ['ja','en']) {
         await expect.poll(() => page.evaluate(() => vm.runtime.targets.length)).toBeGreaterThan(0);
         expect(await executions(page)).toBe(0);
         expect(await page.evaluate(() => vm.extensionManager.isExtensionLoaded('securityfixture'))).toBe(false);
+    });
+
+    test(`mixed extensions from ${language} entry are not automatically selected`, async ({page,evidence}) => {
+        evidence.stage('shared-security-mixed-defaults');
+        await open(page,language,{mixed:true});
+        const rows=dialog(page).locator('article');
+        await expect(rows).toHaveCount(2);
+        await expect(rows.nth(1).locator('.twextsec-info')).toContainText('ID: securityordinary');
+        await expect(dialog(page).locator('input:checked')).toHaveCount(0);
+        await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeDisabled();
+        await expect(rows.nth(0).locator('input[value="sandboxed"]')).toBeDisabled();
+        await expect(rows.nth(1).locator('input[value="sandboxed"]')).toBeEnabled();
+        expect(await executions(page)).toBe(0);
+        await rows.nth(0).locator('input[value="unsandboxed"]').check();
+        await rows.nth(1).locator('input[value="sandboxed"]').check();
+        await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
+        await expect(dialog(page)).toHaveCount(0);
+        await expect.poll(()=>executions(page)).toBe(1);
+        await expect.poll(()=>page.evaluate(()=>vm.extensionManager.isExtensionLoaded('securityordinary'))).toBe(true);
     });
 }
 
@@ -157,8 +187,8 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
     await expect(dialog(page).locator('.twextsec-required-mode')).toHaveText('動作に必要');
     await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
     const unsandboxed=dialog(page).locator('input[value="unsandboxed"]');
-    await unsandboxed.focus();await unsandboxed.press('Space');
     await expect(unsandboxed).toBeChecked();
+    await unsandboxed.focus();await unsandboxed.press('Space');
     await unsandboxed.press('ArrowLeft');
     await expect(unsandboxed).toBeChecked();
     const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
@@ -172,4 +202,8 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
         expect(box.x).toBeGreaterThanOrEqual(modalBounds.x);
         expect(box.x+box.width).toBeLessThanOrEqual(modalBounds.x+modalBounds.width);
     }
+    expect(await executions(page)).toBe(0);
+    await ok.focus();await ok.press('Enter');
+    await expect(dialog(page)).toHaveCount(0);
+    await expect.poll(()=>executions(page)).toBe(1);
 });
