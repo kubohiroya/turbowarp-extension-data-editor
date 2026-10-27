@@ -35,12 +35,12 @@ const labels = {
     ja:{mode:'サンドボックスなし',cancel:'キャンセル',yes:'はい',no:'いいえ'},
     en:{mode:'Without sandbox',cancel:'Cancel',yes:'Yes',no:'No'}
 };
-const open = async (page, language) => {
+const open = async (page, language, options) => {
     await page.goto(`${language}/`);
     const href = await page.locator('a.button[href*="editor.html"]').first().getAttribute('href');
     const target = new URL(href,page.url());
     expect(target.searchParams.has('extensionSecurityBatch')).toBe(false);
-    target.searchParams.set('project_url',await projectURL());
+    target.searchParams.set('project_url',await projectURL(options));
     await page.goto(target.href);
     await expect(dialog(page)).toBeVisible();
     await expect(dialog(page).locator('.twextsec-info')).toContainText(name);
@@ -71,13 +71,18 @@ for (const language of ['ja','en']) {
             .toEqual(['deny','sandboxed','unsandboxed']);
         const blocked = dialog(page).locator('input[value="sandboxed"]');
         await expect(blocked).toBeDisabled();
+        await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
+        await expect(dialog(page).locator('.twextsec-bulk button[value="deny"]')).toBeDisabled();
         await expect(dialog(page).locator('.twextsec-bulk button[value="sandboxed"]')).toBeDisabled();
+        await expect(dialog(page).locator('.twextsec-bulk button[value="unsandboxed"]')).toBeEnabled();
+        await expect(dialog(page).locator('input:checked')).toHaveCount(0);
         await expect(dialog(page).locator('.twextsec-info')).toContainText(language==='ja' ?
             'この拡張はサンドボックス内では動作しません。' : 'This extension cannot run inside the sandbox.');
         await expect(dialog(page).locator('label[data-mode="unsandboxed"]')).toContainText(
             language==='ja' ? '動作に必要' : 'Required to run');
         expect(await executions(page)).toBe(0);
         const mode = dialog(page).getByRole('radio',{name:`${name}: ${labels[language].mode}`,exact:true});
+        await expect(mode).toBeEnabled();
         await mode.check();
         const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
         await expect(ok).toBeEnabled();
@@ -128,9 +133,9 @@ test('extensions without a required mode can still run sandboxed', async ({page,
     await expect.poll(()=>page.evaluate(()=>vm.extensionManager.isExtensionLoaded('securityfixture'))).toBe(true);
 });
 
-test('denying a required extension still requires confirmation and never executes it', async ({page,evidence}) => {
-    evidence.stage('shared-security-required-denial');
-    await open(page,'ja');await dialog(page).locator('input[value="deny"]').check();
+test('denying an extension without a required mode still requires confirmation and never executes it', async ({page,evidence}) => {
+    evidence.stage('shared-security-ordinary-denial');
+    await open(page,'ja',{required:false});await dialog(page).locator('input[value="deny"]').check();
     await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
     await expect(dialog(page).getByRole('alertdialog')).toContainText('作者が意図した動作');
     await dialog(page).getByRole('button',{name:'いいえ',exact:true}).click();
@@ -150,9 +155,10 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
         .toEqual(['deny','sandboxed','unsandboxed']);
     await expect(dialog(page).locator('input[value="sandboxed"]')).toBeDisabled();
     await expect(dialog(page).locator('.twextsec-required-mode')).toHaveText('動作に必要');
-    const deny=dialog(page).locator('input[value="deny"]');
-    await deny.check();await deny.press('ArrowRight');
-    await expect(dialog(page).locator('input[value="unsandboxed"]')).toBeChecked();
+    await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
+    const unsandboxed=dialog(page).locator('input[value="unsandboxed"]');
+    await unsandboxed.focus();await unsandboxed.press('Space');await unsandboxed.press('ArrowLeft');
+    await expect(unsandboxed).toBeChecked();
     const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
     await expect(ok).toBeEnabled();const bounds=await ok.boundingBox();
     expect(bounds.y+bounds.height).toBeLessThanOrEqual(600);
