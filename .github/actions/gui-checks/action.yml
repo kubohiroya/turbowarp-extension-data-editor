@@ -9,11 +9,12 @@ runs:
   steps:
     - uses: actions/setup-node@v4
       with:
-        node-version-file: .nvmrc
+        node-version-file: turbowarp-extension-data-editor/.nvmrc
         cache: npm
         cache-dependency-path: scratch-gui/package-lock.json
     - uses: pnpm/action-setup@v6
       with:
+        package_json_file: turbowarp-extension-data-editor/package.json
         run_install: false
     - name: Build and verify the shared distribution
       id: core

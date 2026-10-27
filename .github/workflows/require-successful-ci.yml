@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .nvmrc
+          node-version-file: ci-gate-tools/.nvmrc
       - name: Require the latest matching normal CI to succeed
         env:
           GH_TOKEN: ${{ github.token }}
