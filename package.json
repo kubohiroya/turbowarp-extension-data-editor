@@ -1,6 +1,6 @@
 {
   "name": "@kubohiroya/turbowarp-extension-data-editor",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "Custom editor sessions and UI for structured data handled by TurboWarp extensions",
   "type": "module",
   "sideEffects": [

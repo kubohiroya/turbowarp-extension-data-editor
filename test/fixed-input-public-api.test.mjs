@@ -84,15 +84,20 @@ test('fixed registration types compile against actual vendor declarations with s
   assert.equal(result.status, 0, result.stdout + result.stderr || result.error?.message);
 });
 
-test('the existing GUI capability helper cannot expose fixed registration from the default service', async t => {
+test('the GUI preserves service capabilities without adding fixed registration to the default service', async t => {
   const gui = process.env.BLOCK_EDITOR_GUI_ROOT;
   if (!gui) {t.skip('Set BLOCK_EDITOR_GUI_ROOT for the separate real GUI capability check.'); return;}
   const source = readFileSync(join(gui, 'src/lib/tw-block-editor-capabilities.js'), 'utf8');
   const {default: expose} = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
   for (const sourceForms of [false, true]) {
-    const api = expose(rjsf.createBlockEditorService().api, sourceForms);
+    const service = rjsf.createBlockEditorService();
+    const api = expose(service.api, sourceForms);
     assert.equal(Object.hasOwn(api, 'registerFixedInputEditor'), false);
     assert.equal(typeof api.register, 'function');
-    assert.equal(typeof api.registerSourceEditor, sourceForms ? 'function' : 'undefined');
+    // The current GUI has removed URL gating; service capabilities are preserved for either legacy argument.
+    assert.equal(api.registerSourceEditor, service.api.registerSourceEditor);
+    assert.equal(typeof api.registerSourceEditor, 'function');
+    const fixedService = rjsf.createBlockEditorService({fixedInputs: true});
+    assert.equal(expose(fixedService.api, sourceForms).registerFixedInputEditor, fixedService.api.registerFixedInputEditor);
   }
 });
