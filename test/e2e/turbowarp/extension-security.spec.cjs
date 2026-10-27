@@ -157,7 +157,9 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
     await expect(dialog(page).locator('.twextsec-required-mode')).toHaveText('動作に必要');
     await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
     const unsandboxed=dialog(page).locator('input[value="unsandboxed"]');
-    await unsandboxed.focus();await unsandboxed.press('Space');await unsandboxed.press('ArrowLeft');
+    await unsandboxed.focus();await unsandboxed.press('Space');
+    await expect(unsandboxed).toBeChecked();
+    await unsandboxed.press('ArrowLeft');
     await expect(unsandboxed).toBeChecked();
     const ok = dialog(page).getByRole('button',{name:'OK',exact:true});
     await expect(ok).toBeEnabled();const bounds=await ok.boundingBox();
