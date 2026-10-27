@@ -95,9 +95,13 @@ test('default E2E selection preserves both reload routes and includes both theme
     const collect = suite => [...(suite.specs || []), ...(suite.suites || []).flatMap(collect)];
     const specs = JSON.parse(result.stdout).suites.flatMap(collect);
     const cases = specs.flatMap(spec => spec.tests.map(entry => ({...entry, file: spec.file, title: spec.title})));
-    assert.equal(cases.length, 15);
+    assert.equal(cases.length, 17);
     const security = cases.filter(entry => entry.file === 'extension-security.spec.cjs');
-    assert.equal(security.length, 8);
+    assert.equal(security.length, 10);
+    for (const language of ['ja', 'en']) {
+        assert.equal(security.filter(entry =>
+            entry.title === `mixed extensions from ${language} entry are not automatically selected`).length, 1);
+    }
     for (const entry of security) assert.equal(entry.projectName, 'chromium-project-url');
     assert.equal(cases.filter(entry => entry.file === 'editor.spec.cjs').length, 4);
     const themes = cases.filter(entry => entry.file === 'invalid-theme.spec.cjs');
@@ -123,7 +127,7 @@ test('explicit fixed-input E2E profile selects all fixed cases without capabilit
             spec.tests.map(entry => ({...entry, file: spec.file, title: spec.title})));
     };
     const combined = run([]);
-    assert.equal(combined.length, 20);
+    assert.equal(combined.length, 22);
     assert.equal(combined.filter(entry => entry.file === 'fixed-inputs.spec.cjs').length, 5);
     const fixed = run(['--project=chromium-project-url', 'fixed-inputs.spec.cjs']);
     assert.equal(fixed.length, 5);
