@@ -1,6 +1,11 @@
 {
+  "author": {
+    "name": "Hiroya Kubo",
+    "email": "hiroya@cuc.ac.jp",
+    "url": "https://github.com/kubohiroya"
+  },
   "name": "@kubohiroya/turbowarp-extension-data-editor",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Custom editor sessions and UI for structured data handled by TurboWarp extensions",
   "type": "module",
   "sideEffects": [
