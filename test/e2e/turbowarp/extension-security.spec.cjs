@@ -74,16 +74,12 @@ for (const language of ['ja','en']) {
         for (const value of ['securityfixture',description,'Fixture Author',license]) await expect(info).toContainText(value);
         await expect(info).not.toContainText('Nested description');
         await expect(dialog(page).locator('textarea')).toHaveCount(0);
-        expect(await dialog(page).locator('.twextsec-bulk button').evaluateAll(items=>items.map(item=>item.value)))
-            .toEqual(['deny','sandboxed','unsandboxed']);
+        await expect(dialog(page).locator('.twextsec-bulk')).toHaveCount(0);
         expect(await dialog(page).locator('.twextsec-columns svg').evaluateAll(items=>items.map(item=>item.dataset.mode)))
             .toEqual(['deny','sandboxed','unsandboxed']);
         const blocked = dialog(page).locator('input[value="sandboxed"]');
         await expect(blocked).toBeDisabled();
         await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
-        await expect(dialog(page).locator('.twextsec-bulk button[value="deny"]')).toBeDisabled();
-        await expect(dialog(page).locator('.twextsec-bulk button[value="sandboxed"]')).toBeDisabled();
-        await expect(dialog(page).locator('.twextsec-bulk button[value="unsandboxed"]')).toBeEnabled();
         await expect(dialog(page).locator('input:checked')).toHaveCount(1);
         await expect(dialog(page).locator('.twextsec-intro')).toContainText(
             language==='ja'?'選択済み':'already selected');
@@ -134,6 +130,10 @@ for (const language of ['ja','en']) {
         await open(page,language,{mixed:true});
         const rows=dialog(page).locator('article');
         await expect(rows).toHaveCount(2);
+        await expect(dialog(page).locator('.twextsec-bulk')).toBeVisible();
+        expect(await dialog(page).locator('.twextsec-bulk button').evaluateAll(items=>items.map(item=>item.value)))
+            .toEqual(['deny','sandboxed','unsandboxed']);
+        await expect(dialog(page).locator('.twextsec-bulk button:enabled')).toHaveCount(3);
         await expect(rows.nth(1).locator('.twextsec-info')).toContainText('ID: securityordinary');
         await expect(dialog(page).locator('input:checked')).toHaveCount(0);
         await expect(dialog(page).getByRole('button',{name:'OK',exact:true})).toBeDisabled();
@@ -141,7 +141,9 @@ for (const language of ['ja','en']) {
         await expect(rows.nth(1).locator('input[value="sandboxed"]')).toBeEnabled();
         expect(await executions(page)).toBe(0);
         await rows.nth(0).locator('input[value="unsandboxed"]').check();
-        await rows.nth(1).locator('input[value="sandboxed"]').check();
+        await dialog(page).locator('.twextsec-bulk button[value="sandboxed"]').click();
+        await expect(rows.nth(0).locator('input[value="unsandboxed"]')).toBeChecked();
+        await expect(rows.nth(1).locator('input[value="sandboxed"]')).toBeChecked();
         await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
         await expect(dialog(page)).toHaveCount(0);
         await expect.poll(()=>executions(page)).toBe(1);
@@ -158,6 +160,7 @@ test('extensions without a required mode can still run sandboxed', async ({page,
     const sandboxed = dialog(page).getByRole('radio',{name:`${name}: サンドボックスあり`,exact:true});
     await expect(sandboxed).toBeEnabled();
     await expect(dialog(page).locator('.twextsec-required-mode')).toHaveCount(0);
+    await expect(dialog(page).locator('.twextsec-bulk')).toBeVisible();
     await sandboxed.check();await dialog(page).getByRole('button',{name:'OK',exact:true}).click();
     await expect(dialog(page)).toHaveCount(0);
     await expect.poll(()=>page.evaluate(()=>vm.extensionManager.isExtensionLoaded('securityfixture'))).toBe(true);
@@ -188,6 +191,7 @@ test('narrow security dialog retains ordered choices, reasons and a reachable co
     await expect(dialog(page).locator('input[value="deny"]')).toBeDisabled();
     const unsandboxed=dialog(page).locator('input[value="unsandboxed"]');
     await expect(unsandboxed).toBeChecked();
+    await expect(dialog(page).locator('.twextsec-bulk')).toHaveCount(0);
     await unsandboxed.focus();await unsandboxed.press('Space');
     await unsandboxed.press('ArrowLeft');
     await expect(unsandboxed).toBeChecked();
