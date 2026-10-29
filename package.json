@@ -60,14 +60,10 @@
   },
   "packageManager": "pnpm@11.28.8",
   "scripts": {
-    "check": "node --test test/ci/*.test.mjs && node --test test/site/*.test.cjs && pnpm typecheck && pnpm test && pnpm test:e2e:infrastructure",
+    "check": "node --test test/ci/*.test.mjs && pnpm typecheck && pnpm test",
     "typecheck": "tsc --noEmit",
     "build": "tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-build-info.mjs",
     "test": "pnpm build && node --test test/*.test.mjs",
-    "test:e2e:block-editor": "playwright test --config test/e2e/turbowarp/playwright.config.cjs",
-    "test:e2e:fixed-inputs": "E2E_FIXED_INPUTS=1 playwright test --config test/e2e/turbowarp/playwright.config.cjs --project=chromium-project-url fixed-inputs.spec.cjs",
-    "test:e2e:infrastructure": "node --test test/e2e/turbowarp/infrastructure.test.cjs",
-    "test:e2e:native": "E2E_NATIVE=1 pnpm test:e2e:block-editor",
     "prepack": "npm run build",
     "prepare": "npm run build"
   },

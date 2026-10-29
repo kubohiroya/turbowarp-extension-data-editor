@@ -1,68 +1,32 @@
-# GitHub Pages 公開
+# GitHub Pages提供の廃止とTurboWarp-Plus-Editorへの移管
 
-公開と運用の正本は共通リポジトリです。[運用Issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26) を使用します。
-GUIフォークにはエディターAPIへの接続を置き、サイト・公開用ビルド・Pages・公開E2E起動は共通側が所有します。
+本ライブラリのGitHub Pages提供は廃止します。旧URLでEditorやリダイレクトを提供しません。
+ライブラリのnpm公開、API、単体テストは維持します。
 
-## 公開物と固定ソース
+統合Editorの正式名称は **TurboWarp-Plus-Editor** です。ビルド・統合E2E・GitHub Pages配信は、下流の [kubohiroya/turbowarp-plus-editor](https://github.com/kubohiroya/turbowarp-plus-editor) が所有します。
 
-- 入口: https://kubohiroya.github.io/turbowarp-extension-data-editor/
-- 日本語 `/ja/`、英語 `/en/`、標準Editor `editor.html`。Docs・Samplesはこの正規URLを参照します。
-- GUIは共通のカメラ・再生操作列を含む `d75aff2e72816a4d2cf84f80889d5c60bfd9873b`へ更新し、coreは公開npm `0.3.2`の完全SHAを維持しています。
-- `site/source.json` にGUIのrepository/完全SHAと、GUI lockfileで取得するnpm配布物のcore完全SHAを固定します。
-- `build-info.json` の `revision` はGUI SHA、`coreRevision` は実配布物のcore SHA、`siteRevision` はサイト生成・公開を所有する共通SHAです。3つを混同しません。
-- 移行は公開配置だけを変更し、既存npm製品版の差替えや未公開Schema機能の導入は行いません。新しい製品版へ切替えるときはGUI lockfileとcore pinを合わせます。
+- 案内画面: https://kubohiroya.github.io/turbowarp-plus-editor/
+- Editor: https://kubohiroya.github.io/turbowarp-plus-editor/editor.html
+- 固定GUI/coreのソース設定・公開手順・再利用できる編集ボタン: [TurboWarp-Plus-EditorのREADME](https://github.com/kubohiroya/turbowarp-plus-editor#edit-button)
 
-日英の実HTML、言語の手動選択とnavigator.languages、Octocatリンク、本家TurboWarp/Scratchへのクレジットと独自拡張の説明を維持します。
-Pagesは静的配信のため、サーバーのAccept-Language交渉は使いません。対象の編集機能は標準で有効で、公開リンクには有効化用URLスイッチを付けません。
-GUIのGPL LICENSEを取得したGUIソースから同梱し、GUIとcoreの公開ソースへの完全SHAリンクを残します。
+## 責務
 
-## ビルド
+本リポジトリのCIはライブラリと互換配布物を検証します。下流GUIの取得・ビルド・配信・統合E2Eを実行しません。
+GUIのコードはscratch-guiフォークが所有し、そのGUIにライブラリを組み込んだ静的Editorの配布をTurboWarp-Plus-Editorが担当します。
 
-共通ルートで実行します。GUI checkoutは `site/source.json` の完全SHAへ合わせ、依存と上流生成資材を準備します。
+`site/`、`scripts/site/`、GUI統合E2E、GUI用composite action、Pages/配信後検証workflowを本リポジトリから除去します。
+同リポジトリ内のCI再実行・ゲート検証は維持し、下流GUIやPagesの稼働を前提にしません。
 
-```sh
-pnpm install --frozen-lockfile
-cd /absolute/path/scratch-gui
-npm ci --no-audit --no-fund
-node scripts/prepublish.mjs
-cd /absolute/path/turbowarp-extension-data-editor
-E2E_GUI_ROOT=/absolute/path/scratch-gui node scripts/site/build.mjs
-```
+## 移行の確認
 
-公開用設定は `scripts/site/webpack.config.cjs` がGUIのブラウザ用設定を選択します。
-`build/` はGUI checkoutの作業領域に生成しますが、GUIへコミットしません。
-案内HTML・言語選択・CSS・公開metadata・favicon選択は共通側の処理です。
+1. TurboWarp-Plus-Editorのビルド・統合E2E・Pages配信と、作品URLを指定した読み込みを確認します。
+2. README・Docs・Samplesの入口を新しい編集ボタンへ更新します。`project_url`と`lang`は新URLへ渡します。
+3. 本リポジトリのPagesをUnpublishし、GitHub Pages設定そのものを無効化します。workflow削除だけでは既存の公開ファイルは消えません。
+4. 旧URLがEditorを配信していないことと、新URLが固定ソースどおりの版を配信することを確認します。
 
-## 公開と検証
+## DoD・切戻し
 
-共通mainへのpushとmainからの `workflow_dispatch` だけが公開対象です。
-GitHub PagesのsourceはActions、github-pages環境はmain branchだけを許可します。
+DoDは、上流に下流GUIを取得するビルド/配信処理がないこと、npmライブラリ検証が成功すること、新サイトと参照先の移行、旧Pagesの停止です。
 
-```sh
-gh workflow run pages.yml --repo kubohiroya/turbowarp-extension-data-editor --ref main
-```
-
-build前とdeploy直前に共通mainの鮮度、固定GUI SHAのdevelop push CI全体の最新attempt成功を確認します。
-GUI CIは公開APIで読み取り、他repoへのtokenやwriteは不要です。実行中・失敗・確認不能なら公開を止めます。
-GUI CIの確認は短い上限で失敗するため、未完了だった場合は成功後に新しい公開runを起動します。
-さらに共通側の同一site SHAの通常CI全体成功を既存ゲートで待ち、最新attemptの失敗・実行中で古い成功を採用しません。
-buildとCIゲートの両方が成功したときだけdeployへ進み、鮮度を再確認します。
-公開jobだけがPages:write/id-token:writeを持ちます。最新attemptテストや公開E2Eへ渡しません。
-
-公開前と公開後に既存E2E6件を実行します。GUI/core/siteの期待SHAはソースのpinから決め、配信された値を自己採用しません。
-専用エディター起動・validation・保存・cancel・実sb3の書出し/再読込・明暗テーマを検証します。
-必要時の手動公開版E2Eは共通 `site-public.yml` が起動します。定期起動は設定しません。
-OSネイティブファイル選択は対話可能なmacOSで行う既存手順を維持し、Linux CI成功で代替しません。
-
-## 移行とロールバック
-
-新サイトの公開と公開版E2Eが成功してから、GUI側のサイト資材・公開workflowを撤去します。
-`https://kubohiroya.github.io/scratch-gui/` はGUI側の別配信です。そちらの更新だけでは正規Editorのpinは変わりません。
-Docs・Samplesからは共通リポジトリの正規Editorを参照し、GUI更新時は成功CI・公開coreの整合を確認して `site/source.json` の完全SHAを更新します。
-旧URLから新URLへの自動redirectを実現したとは扱いません。旧URLの廃止・redirect公開は別の明示判断で行います。
-
-新サイト不具合は共通mainのGUI/core pinを前の検証済み値へ戻し、通常CIとゲート経由で再公開します。
-失敗時にゲートを解除しません。公開を止める場合は共通pages workflowを無効化します。
-GUIのコード、低水準APIの能力交渉、sb3保存形式には公開配置による変更を加えません。標準ONの編集機能に有効化用URLスイッチは不要です。
-
-GUIのgit固定security-dialog依存はprepareでdist/webpack4.cssを生成するため、GUI CIと同じ通常npm ciを使います。coreのbuild-info revision、GUI pin、成功CIの照合を維持し、配布物が未生成の状態で公開しません。
+問題があればTurboWarp-Plus-Editor側の固定ソース設定を直前の検証済み版へ戻して再配信します。
+本ライブラリの配信workflowや旧Pagesを復活させず、npmの既存版やSB3の保存形式を変更しません。

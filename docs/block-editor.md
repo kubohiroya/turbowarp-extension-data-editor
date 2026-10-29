@@ -6,7 +6,7 @@
 基盤はPR #3で`develop`へ、YAML互換はPR #5、初版受け入れ修正はPR #6で`feat/site/github-pages`へ統合しました。
 開発の統合先である`develop`にも、公開ブランチのYAML互換・受け入れ修正とPages配信機構を取り込んでいます。
 初版の検証記録は当時の`fix/editor/issue-1-acceptance`とサイト用ブランチを対象にした履歴です。
-共通APIの固定参照は、scratch-guiの `.github/workflows/node.js.yml` / `pages.yml` / `block-editor-public.yml` で管理します。CI・公開版E2Eの手順は[共通E2Eガイド](block-editor-e2e.md)を参照してください。
+GUIは共通APIの依存版を固定し、統合配信の固定ソースとE2EはTurboWarp-Plus-Editorで管理します。CI・公開版E2Eの手順は[共通E2Eガイド](block-editor-e2e.md)を参照してください。
 ローカル受け入れ結果と公開状態は[検証記録](block-editor-acceptance.md)を参照してください。
 Issue #2の階層編集は別の既定OFFフラグで追加しています。[階層編集の仕様と検証](block-editor-descendants.md)を参照してください。
 

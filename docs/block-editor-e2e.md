@@ -1,129 +1,13 @@
-# 専用エディターとsb3の継続E2E
+# 専用エディターとSB3の統合E2E
 
-現行GUIの編集機能は標準ONです。有効化用URLスイッチは撤去しました。旧フラグの説明は段階導入時の履歴で、現在の起動・切戻し方法は[README](../README.ja.md#標準動作とロールバック)に従ってください。
+GUIを起動する統合E2Eと配信前後の確認は、下流の [TurboWarp-Plus-Editor](https://github.com/kubohiroya/turbowarp-plus-editor) へ移管します。現在の実行コマンド・固定ソース・対応ブラウザー・証跡の保存先は同リポジトリの手順を参照してください。
 
-運用の正本: [共通Issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26)。関連: [基盤・sb3のGUI Issue #12](https://github.com/kubohiroya/scratch-gui/issues/12)、[テーマ別invalid表示の共通Issue #12](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/12)。Playwright Testで同梱サンプルの読込、ブロック配置、アイコン起動、入力検証、保存、キャンセル、実際の `.sb3` の書出しと再読込を操作する。アプリやセキュリティ確認を差し替えず、内部VM APIでデータを投入しない。
+本ライブラリでは `pnpm typecheck` と `pnpm test` でAPI・標準フォーム・互換配布物を検証します。GUI checkoutや公開Editorの稼働を必要としません。
+単体のレイアウト用ブラウザfixtureはライブラリ検証として維持します。
 
-## セットアップ
+本リポジトリの旧Pagesは廃止します。提供元の責務と移行DoDは [Pages廃止と移管](github-pages.md) を参照してください。
 
-本体・開発依存・CI手順はturbowarp-extension-data-editorが所有する。Node.js 22以上とpnpm 11.18.0を使い、GUIと共通リポジトリを隣に配置する。以下は共通リポジトリで実行する。GUIにPlaywrightを追加しない。
-
-```sh
-pnpm install --frozen-lockfile
-pnpm build
-pnpm exec playwright install --with-deps chromium
-cd ../scratch-gui
-npm ci --ignore-scripts --no-audit --no-fund
-node scripts/prepublish.mjs
-cd ../turbowarp-extension-data-editor
-E2E_GUI_ROOT=/absolute/path/scratch-gui node scripts/site/build.mjs
-E2E_GUI_ROOT=/absolute/path/scratch-gui E2E_PATH_PREFIX=/turbowarp-extension-data-editor/ pnpm test:e2e:block-editor
-```
-
-`E2E_GUI_ROOT` はローカルbuildを配信するGUI checkoutの絶対パス。未指定・無効なパスは起動失敗にする。外部URLの検証には不要。レポートは呼出し元のcwdによらず共通リポジトリ配下へ保存する（公開版選択/配信待機CLIは共通ルートで実行）。
-
-対象ソース・固定依存と一致するビルドがあれば、E2Eだけを再実行できる。テスト専用HTTPサーバーは `127.0.0.1:8732/turbowarp-extension-data-editor/`（E2E_PATH_PREFIXで指定） で起動し、終了時に停止する。別ポートは `E2E_PORT=8733` で指定する。他のサーバーは流用しない。
-
-```sh
-E2E_GUI_ROOT=/absolute/path/scratch-gui pnpm test:e2e:block-editor --project=chromium-file-input
-E2E_GUI_ROOT=/absolute/path/scratch-gui pnpm test:e2e:block-editor --project=chromium-project-url
-pnpm test:e2e:infrastructure
-```
-
-## 検証経路
-
-| 構成 | 再読込経路 | 合格が示す範囲 |
-| --- | --- | --- |
-| `chromium-file-input` | 標準メニュー → file input/filechooser | Android user agentでアプリが選ぶ既存fallback。実Android端末やOS pickerの検証ではない。 |
-| `chromium-project-url` | 標準 `project_url` | ダウンロードした同じsb3バイト列をdata URLで新しいコンテキストへ渡す。 |
-| `chrome-macos-native` | 標準メニュー → File System Access API → macOS「開く」 | テスト専用のローカルGoogle ChromeとOSダイアログを操作する。実ファイルを選択し、復元されたフォームまで検証する。 |
-
-通常実行は既存2シナリオ×2構成の4件と、`chromium-project-url`のみの明色／暗色2件、計6件。opt-in起動、duration=0/61・label空欄の保存抑止、下書きの分離、日本語・引用符・`&`を含む値の保存、再起動、キャンセルを確認する。標準ファイルメニューからダウンロードしたsb3のZIP/CRC、`project.json`、text shadowの値、編集セッション情報の非混入を検査する。その同じファイルを新しいコンテキストへ読み込み、通常の拡張確認を経て値・アイコン・フォームを復元し、再検証とキャンセルを確認する。別シナリオで起動フラグの既定OFFを検証する。
-
-すべての構成で普段のChromeプロファイルを使用せず、Playwrightが作るテスト用コンテキストを使う。`showOpenFilePicker`の差し替えや無効化は行わない。
-
-## 明色・暗色のinvalid表示
-
-`invalid-theme.spec.cjs`は通常の`project_url`でテスト専用sb3を開き、2つの拡張について通常のセキュリティ確認を操作します。fixtureは`theme-project.cjs`に置き、配布サンプルやVMへ直接投入しません。検証用sb3は圧縮してdata URLの長さを抑え、ステージ画像も同梱します。
-
-実際のSettingsメニューでGUIテーマを切り替え、各ケースを独立したブラウザコンテキストで実行します。メディア設定だけのテーマ切替や、テストによるエラークラス・ARIA・CSSの付与は行いません。
-
-- 初期invalidの空文字禁止・数値範囲・列挙値・textarea／入れ子のパターン違反を確認。赤枠、テーマ別の薄い赤背景、項目別説明、`aria-invalid`と説明IDの関連づけを実DOM／computed styleで判定します。
-- validへ修正した後は、通常の入力枠・背景への復帰、説明とinvalid状態の解除、保存ボタンの有効化を確認します。
-- 異なる拡張の親・孫、有効な兄弟について名前・アイコン・枠線・薄い背景を確認し、修正前後を比較します。有効な入力欄が祖先のエラーに巻き込まれないことも確認します。
-- 入力での再invalid化、フォーカス、祖先の折りたたみとエラー案内からの再展開、下書きの保持を確認します。
-- 配列の要素数・オブジェクトのプロパティ数によるグループ全体のエラーを確認し、有効な子の入力を赤くしないことを確認します。
-- キャンセル後に元値が保持されることと、階層フラグなしの単一フォームでも同じ項目装飾・解除が動くことを確認します。
-
-明色の赤枠は`rgb(198, 40, 40)`、暗色は`rgb(255, 138, 138)`を期待します。色仕様を変更するときは、期待値と変更理由を対で更新します。画面全体のピクセル一致は合否判定にしません。
-
-```sh
-E2E_GUI_ROOT=/absolute/path/scratch-gui pnpm test:e2e:block-editor invalid-theme.spec.cjs --project=chromium-project-url
-```
-
-公開版では、上記に代えて次節の公開URL・期待GUI/core SHAを指定します。既存のファイル読込2経路でのsb3往復を再度組み合わせず、表示テストはdesktop Chromiumへ限定します。`chrome-macos-native`は従来の2ケースのみです。Firefox・Safari・実Android端末はこのテストの対象外です。
-
-成功時にも`light-invalid.png`、`light-valid.png`、`dark-invalid.png`、`dark-valid.png`を添付します。各テーマの`*-styles.json`には期待／実配信のSHA、ブラウザ・OS、対象URL、項目の修正前後の枠線・背景・説明・ARIA、ブロック外観を記録し、失敗途中でも到達段階まで保存します。`execution.json`の配信前後照合、browser errors、失敗画面・traceと合わせて確認してください。
-
-`summary.json`には予定／記録件数とテーマ別の成功・失敗・skip件数を出力し、GitHub summaryにもテーマとテスト名を示します。通常実行が6件で明色・暗色を各1件含むことを確認し、意図しないskip・未検出を完了扱いにしません。
-
-公開経路は共通側のpages/site-public workflowが所有し、GUI側に公開workflowを置きません。共通mainのworkflowとrunnerを同じ完全SHAで実行します。共通側の公開workflowとrunnerのSHAを一致させます。実際のPages配信後ジョブでこの2ケースの成功と4枚・JSONのartifactを確認し、Actions URLと両SHAを共通Issue #12へ記録して公開導入を完了とします。 npm版の製品ソースSHAとE2E runnerのSHAは区別します。このテストだけを追加するために製品versionや公開`coreRevision`を書き換えず、期待coreは配信された製品の実ソースに対応させます。
-
-表示テストだけ切り戻す場合は新spec／fixtureと呼出し参照変更を対でrevertし、直前の確認済みrunnerへ戻します。既存の配信版照合・sb3往復・既定OFFテストを維持し、恒久skipや無条件retryで失敗を隠しません。製品のフラグ・スキーマ・保存形式は変更しません。
-
-## macOSネイティブ経路
-
-GUIログイン中のmacOS、ローカルGoogle Chrome、Xcode Command Line Tools（Swift）を必要とする。実行元のターミナルまたはCodexに、macOS設定でアクセシビリティ権限とSystem Eventsへのオートメーション権限を許可しておく。権限・フォーカスがない場合は環境エラーとして失敗し、別経路へ迂回しない。
-
-```sh
-E2E_GUI_ROOT=/absolute/path/scratch-gui pnpm test:e2e:native
-```
-
-このコマンドはheaded Chromeで2シナリオを実行する。CDPでテスト用ブラウザのPIDを取得し、SwiftのAccessibility APIがそのPIDのOS「開く」ダイアログを操作する。各キーボード操作の前に最前面のPIDを照合する。同名Chromeの検索、ユーザーのプロファイル、クリップボード、デスクトップ全体のスクリーンショットは使用しない。ネイティブ操作中は他のアプリへ切り替えない。
-
-`native-picker-operation.log` はダイアログの状態遷移のみを記録する。ファイル選択だけでは成功とせず、拡張確認・フォーム復元まで完了したときだけ `execution.json` の `nativeOSPicker` を `passed` にする。
-
-Linux CIには対話可能なmacOSデスクトップがないため、ネイティブ経路は実行対象外（`not-run`）。運用先はGUIログイン済みのローカルmacOS端末とし、**週1回（月曜の公開版チェック後）およびファイル読込・保存関連の変更をマージする前**にこのコマンドを手動起動する。公開版を使う場合は次節のURL・期待SHAも指定する。未実行の週は未実行として扱い、他の経路の成功で代替しない。実行日・OS/Chrome版・結果と証跡の保管先をレビュー時に確認する。self-hosted runnerの登録やOSの無人操作スケジュールは作成しない。
-
-## 公開版の確認
-
-外部URLの実行にはGUI/coreの完全SHAを必須とする。`build-info.json`から期待値をそのまま自己採用せず、配信元コミットとPages workflowの固定coreを使う。
-
-```sh
-E2E_BASE_URL=https://kubohiroya.github.io/turbowarp-extension-data-editor/ \
-E2E_EXPECT_GUI_REVISION=<GUIの40桁SHA> \
-E2E_EXPECT_CORE_REVISION=<coreの40桁SHA> \
-pnpm test:e2e:block-editor
-```
-
-開始前と終了後にキャッシュを避けて `build-info.json` を確認する。期待値との不一致や途中の配信切替は失敗にし、異なる版の結果を混在させない。再試行は0回。UIの表示・値・ダウンロード完了を待ち、固定sleepを成功条件にしない。
-
-## GitHub Actions
-
-GUIの通常CI/Pagesは共通checkoutの `.github/actions/gui-checks` を呼び出す。インストール・ビルド・対象テスト・スコープ選択・ブラウザ・証跡保存はこのactionが所有する。公開版確認の実装は共通 `.github/workflows/turbowarp-public.yml`、GUI側はトリガーと固定SHAを持つ薄い呼出しだけにする。
-
-公開と運用は共通Issue #26で追跡します。GUIフォークの通常CIは上流構成を維持し、公開・E2E起動を置きません。
-
-- 共通pages.ymlはmainのpush/手動実行だけを許可。固定GUIソースを取得して共通のサイト処理で一度ビルドし、公開前E2E6件を実行します。
-- 公開には同一site SHAの通常CI全体・最新attempt成功と、固定GUI SHAの通常CI成功を要求します。公開直前にmain鮮度とGUI CIを再確認します。
-- 公開後はGUI/core/siteの3 SHAをソースのpinから照合し、反映を最大90秒待って同じE2E6件を実行します。配信build-infoを期待値の根拠にしません。
-- site-public.ymlは手動実行と月曜11:17 JSTの週次検証を所有します。成功した共通Pages deploymentのsite SHAからGUI/core pinsを解決し、アプリを再ビルドしません。
-- API障害・不一致・失敗は成功へ変換せず、既存公開を保持します。旧GUIサイトの検証記録は以下の履歴として残します。
-- 必要なGitHub権限は `contents: read` / 公開チェックの `deployments: read` と、既存deploy jobのPages公開権限のみ。Issueへの自動投稿は行わない。
-- summaryに結果・最後の検証段階・GUI/core SHA・経路・OS picker実行有無を出力する。HTML/JSONレポート、実sb3、失敗画面・trace、console/page/networkログ、配信待機ログを成功・失敗ともartifactへ保存し、7日間保持する。
-
-ワークフローをリポジトリへ公開する前の段階では、ローカル検証や構文検査の成功をGitHub Actions上の実行成功として扱わない。公開後に対象PRのCI、Pages配信後ジョブ、手動チェックの実行URLをIssue #12へ記録する。
-
-## 証跡と失敗の調査
-
-- `playwright-report/block-editor/`: HTMLレポート。`pnpm exec playwright show-report playwright-report/block-editor`。
-- `test-results/block-editor/results.json` / `summary.json`: テスト結果と経路別の最終段階。`execution.json` 添付にGUI/core SHA・ブラウザ/OS・OS picker実行有無を記録する。
-- `test-results/block-editor-deployment/`: 期待する配信版の選択と、配信待機中の状態。Playwrightによる出力ディレクトリ初期化から分離する。
-- roundtripテスト: 実際の `roundtrip.sb3`、サイズ/SHA-256/保存値、復元画面。失敗時のtraceは `pnpm exec playwright show-trace <trace.zip>`。
-- `browser-errors.json`: console error・未捕捉例外・失敗リクエスト・HTTPエラー。未捕捉例外はテストを失敗させる。既存依存VMのconsole error（`Unexpected input recieved in replaceUnsafeChars`）は記録し、ログが空であることは合格条件にしない。
-- Issue #12の配信後6ケースの画像・実測JSONは[リポジトリ内の保存先](editor/issue-12-public-validation/README.md)にも保存済み。artifactの保存期限後の参照は、次節のmain統合コミットに固定した保存先を使う。
-
-失敗段階、版不一致、ブラウザ起動・OS権限などの環境要因を区別して調べる。UI assertionの失敗だけで製品不具合と断定しない。再実行は原因を確認した後に手動で行い、元の失敗記録も保持する。通常の実行生成物はGit管理対象外とし、Issue #12のように検証記録として選定した証跡は出所・ハッシュとともに文書配下へ保存する。テスト用データのみを使う。
+以下は移行前の実行結果です。当時のSHA・コマンド・URL・所有者は検証時点の記録であり、現在の起動/配信手順として使用しません。証跡ファイルと元バイト列は保持しています。
 
 ## 公開配信後の検証結果（Issue #12、2026-10-18）
 

@@ -3,7 +3,6 @@ import {appendFileSync, mkdirSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {fixtureFile, probeFile, repository, scenarios, verifyDecision} from './assert-rerun-probe.mjs';
-import {compareGUI} from './gui-snapshot.mjs';
 
 export const driverFile = 'ci-gate-rerun-test.yml';
 const positive = value => Number.isSafeInteger(value) && value > 0;
@@ -233,10 +232,6 @@ export async function verifyWeekly(runId, {api, reporterSha, now = Date.now} = {
             }
             observers.push({scenario, id, attempt: expected.attempt, decision: proof.decision});
         }
-        report.stage = 'gui';
-        report.gui = {comparison: compareGUI(e.gui?.before, e.gui?.after), before: e.gui.before, after: e.gui.after};
-        assert.ok(stamp(e.gui.before.observedAt) >= stamp(source.run_started_at));
-        assert.ok(stamp(e.gui.after.observedAt) <= stamp(source.updated_at));
         report.stage = 'freshness';
         await fresh();
         return {...report, stage: 'complete', status: 'verified-success', fixture: fixtureId, observers};
@@ -260,12 +255,9 @@ export function commentBody(report) {
         `- 確認時刻: ${report.observedAt}`, `- 報告コードSHA: \`${report.reporterSha}\``,
         `- トークン権限: ${report.permissions === 'verified' ? '元統括の実権限と関連workflow定義を確認（Pages/OIDC/デプロイ権限なし）' : '確認不能'}`];
     if (report.status === 'verified-success') {
-        lines.push('- 親/子証跡: 同一SHA・fixtureの3 attemptsと4判定、実行中の待機、成功後だけsentinel開始を確認。子jobの実権限も照合。',
-            `- GUI/公開サイト前後比較: ${report.gui.comparison === 'unchanged' ? '観測したGUI develop・共通Pages deployment・公開build-infoは同一' : '変更あり。並行作業の有無を確認する必要があり、完全不変とは扱わない'}`,
-            `- GUI develop: \`${report.gui.before.develop}\` → \`${report.gui.after.develop}\``,
-            `- Pages deployment: ${report.gui.before.deployment.id} → ${report.gui.after.deployment.id}`);
-    } else lines.push('- suite成功・GUI状態の完全な検証を完了したとは扱いません。runとreport artifactを確認してください。');
-    lines.push('', '検証・報告は共通側のみで実施し、GUIのコード・CI・固定SHA・公開物を変更する処理はありません。',
+        lines.push('- 親/子証跡: 同一SHA・fixtureの3 attemptsと4判定、実行中の待機、成功後だけsentinel開始を確認。子jobの実権限も照合。');
+    } else lines.push('- suite成功の完全な検証を完了したとは扱いません。runとreport artifactを確認してください。');
+    lines.push('', '検証・報告はこのライブラリのリポジトリ内に限定します。Editorの配信状態は検証対象に含めません。',
         'この文面は共通GitHub Actionsが生成した検証結果の草案です。');
     return lines.join('\n') + '\n';
 }

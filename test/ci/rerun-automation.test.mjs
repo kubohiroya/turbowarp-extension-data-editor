@@ -170,8 +170,8 @@ test('observer verifies full decision identity, latest attempt and expected fail
     }
 });
 
-test('driver configuration cannot target GUI, arbitrary repos, tags or unsupported events', () => {
-    for (const [key, value] of [['GITHUB_REPOSITORY', 'kubohiroya/scratch-gui'], ['GITHUB_REF', 'refs/tags/v1'],
+test('driver configuration cannot target unrelated repos, tags or unsupported events', () => {
+    for (const [key, value] of [['GITHUB_REPOSITORY', 'example/unrelated-project'], ['GITHUB_REF', 'refs/tags/v1'],
         ['GITHUB_EVENT_NAME', 'push'], ['GITHUB_SHA', 'main'], ['GITHUB_RUN_ID', '0'],
         ['GITHUB_RUN_ATTEMPT', 'bad'], ['GH_TOKEN', ''], ['GITHUB_API_URL', 'https://other.example']]) {
         assert.throws(() => configuration({...env, [key]: value}));
@@ -212,7 +212,7 @@ test('rerun workflows stay manual and never gain deployment permissions', () => 
             assert.doesNotMatch(JSON.stringify(job), /deploy-pages|npm publish|secrets: inherit/);
         }
     }
-    for (const file of ['site-public.yml', 'ci-gate-rerun-report.yml']) {
+    for (const file of ['ci-gate-rerun-report.yml']) {
         assert.deepEqual(Object.keys(workflow(file).on), ['workflow_dispatch']);
     }
     const observer = workflow(probeFile);
@@ -233,7 +233,7 @@ test('the fixture executes success/failure/success and refuses extra attempts or
     }
     assert.throws(() => vm.runInNewContext(code, {process: {env: {...env, EXPECTED_REVISION: env.GITHUB_SHA,
         SUITE_ID: '99-1', GITHUB_RUN_ATTEMPT: '4'}}}), /Only three/);
-    for (const patch of [{EXPECTED_REVISION: 'b'.repeat(40)}, {GITHUB_REPOSITORY: 'kubohiroya/scratch-gui'}, {SUITE_ID: 'other'}]) {
+    for (const patch of [{EXPECTED_REVISION: 'b'.repeat(40)}, {GITHUB_REPOSITORY: 'example/unrelated-project'}, {SUITE_ID: 'other'}]) {
         assert.throws(() => vm.runInNewContext(code, {process: {env: {...env, EXPECTED_REVISION: env.GITHUB_SHA,
             SUITE_ID: '99-1', ...patch}}}), /Invalid fixture/);
     }

@@ -1,15 +1,15 @@
 # ドキュメント一覧
 
-独自拡張の日本語文書はturbowarp-extension-data-editorで管理します。scratch-guiには本家由来の資料を残し、専用エディターの文書を重複配置しません。
+本リポジトリはライブラリAPIとホスト接続の文書を管理します。統合Editorのビルド・E2E・配信手順は下流の[TurboWarp-Plus-Editor](https://github.com/kubohiroya/turbowarp-plus-editor)で管理します。
 
 ## 利用・GUI接続・公開
 
 - [GUIの起動・専用編集・制約](block-editor.md)
 - [子孫ブロックの一括編集](block-editor-descendants.md)
-- [GitHub Pagesの日英サイト公開](github-pages.md)
+- [GitHub Pages廃止とTurboWarp-Plus-Editorへの移管](github-pages.md)
 - [専用エディターと.sb3の継続E2E・CI](block-editor-e2e.md)
 
-GUI用ガイドの `src/`・`scripts/`・`site/`・`test/`・`.github/` はscratch-guiのパスです。GUI用のnpmコマンドはscratch-gui、共通API用のpnpmコマンドはturbowarp-extension-data-editorのルートで実行します。両リポジトリは隣接配置します。
+GUI接続ガイドの `src/` とホスト接続用コマンドはscratch-guiのパスです。共通API用コマンドは本リポジトリ、統合E2Eと配信コマンドはTurboWarp-Plus-Editorで実行します。通常のライブラリ検証に隣接GUI checkoutは不要です。
 
 ## 共通APIとアダプター
 
