@@ -1,33 +1,13 @@
 # 通常CI成功ゲート
 
-公開・検証の正本: [共通Issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26)。
-共通 `.github/workflows/pages.yml` がbuild、CIゲート、deploy、公開後E2Eを所有します。
-GUIフォークには公開用workflowを置きません。
+本リポジトリはライブラリCIと、同リポジトリのActionsに限定したゲートの検証コードを管理します。
+TurboWarp-Plus-Editorの統合ビルド・Pages・配信前後のE2Eは下流の [kubohiroya/turbowarp-plus-editor](https://github.com/kubohiroya/turbowarp-plus-editor) が所有します。本リポジトリはGUIを取得・ビルド・配信しません。
 
-## 公開条件
+ゲートはrepo/head repo、workflow ID、event、branch、完全SHAと最新attemptを照合し、失敗・実行中・API確認不能を成功へ変換しません。
+ゲート自身は読み取り専用です。判定を `normal-ci-gate-<run id>-<attempt>` のdecision.jsonとsummaryへ保存します。
+境界のローカル検証は `node --test test/ci/*.test.mjs` です。
 
-- 共通mainのイベントSHAとサイト成果物のsiteRevisionを一致させます。
-- 共通 `ci.yml` のmain push CI全体が同一SHAでcompleted/successの場合だけ公開します。
-- ゲートはcaller自身のrepoの標準tokenを利用し、repo/head repo、workflow ID、event、branch、完全SHAを照合します。
-- 一致する最新run番号と詳細APIの最新attemptを確認。queued/実行中は15秒間隔、全体30分上限で待機します。
-- 失敗・cancel・timeout・skip・不完全なAPI・権限不足は拒否し、古い成功を代用しません。
-- ゲート自身にCI起動・再実行・承認・cancel・Pages権限はありません。
-- `normal-ci-gate-<run id>-<attempt>` のdecision.jsonとsummaryに採用SHA/run/attempt/観測時刻/理由を保存します。
-
-公開jobはbuildとgateのsuccessに依存し、直前に共通main鮮度と固定GUI SHAのCI成功を再確認します。
-GUI CIの読取りは `scripts/site/source.mjs` が同じ判定本体を利用します。
-公開APIだけを使い、未完了や確認不能なら短い上限で拒否します。
-PagesやE2E自身を通常CIの代用にせず、公開後E2E失敗と公開前の抑止を区別します。
-同一SHA確認とdeployは原子的ではないため、観測時刻と最終鮮度確認を残します。
-
-## 検証・ロールバック
-
-境界テストは `node --test test/ci/*.test.mjs`、サイト入口は `node --test test/site/*.test.cjs`。
-既存の `ci-gate-probe.yml` は読み取り専用ゲートと公開代替sentinelを検証します。
-意図した負の対照ではgate=failure、sentinel=skipped、assert=successが期待値です。
-実公開を故意に壊さず、隔離fixtureだけを使います。
-rollbackは公開workflow停止、または前の検証済みサイト設定へrevertしてCI経由で再公開します。
-確認不能を理由にgateを解除しません。[Pages運用](github-pages.md)を参照してください。
+下流GUIのbranchやPagesの観測は廃止しました。CI再実行の検証は、このリポジトリのfixture・observerの証跡と権限だけで完結します。
 
 ## 最新attemptの自動実検証
 
@@ -38,7 +18,7 @@ gh workflow run ci-gate-rerun-test.yml \
   --repo kubohiroya/turbowarp-extension-data-editor --ref main
 ```
 
-統括・fixture・observerは手動dispatchのみです。実GitHubテストをpush/PRから自動起動しません。通常CIは既存の `node --test test/ci/*.test.mjs` により、統括ロジック・fixture・誤run/attempt・権限境界・timeout等のローカルテストを実行します。変更時の通常CI・公開前後E2Eと、必要時の手動検証で運用します。
+統括・fixture・observerは手動dispatchのみです。実GitHubテストをpush/PRから自動起動しません。通常CIは既存の `node --test test/ci/*.test.mjs` により、統括ロジック・fixture・誤run/attempt・権限境界・timeout等のローカルテストを実行します。変更時の通常CIと、必要時の手動検証で運用します。
 
 ### 確認する順序
 

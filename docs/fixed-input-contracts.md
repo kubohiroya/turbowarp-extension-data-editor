@@ -72,7 +72,9 @@ GUI・commonの試験では16フラグ分類、日英・focus/keyboard、23展�
 
 ## E2Eの対象と明示profile
 
-`pnpm test:e2e:block-editor`は既存SOURCE経路・reload・light/darkの6件を実行する。Pagesと公開後検証もこの既定profileを使う。`site/source.json`では選定した最新GUI/coreの元Git SHAを固定し、使用するnpm版・配布物hash・working-treeの区分も別に照合する。Pages公開は別の明示承認を要する。
+以下のGUI統合E2Eは下流のTurboWarp-Plus-Editorへ移管しました。コマンドは同リポジトリで実行します。
+
+`pnpm test:e2e:block-editor`は既存SOURCE経路・reload・light/darkの6件を実行する。Pagesと公開後検証もこの既定profileを使う。TurboWarp-Plus-Editorの固定ソース設定では選定した最新GUI/coreの元Git SHAを固定し、使用するnpm版・配布物hash・working-treeの区分も別に照合する。Pages公開は別の明示承認を要する。
 
 S3-3のfixed対応GUIとcommon artifactを明示した検証先には、`pnpm test:e2e:fixed-inputs`で固定入力21件を実行する。既存6件も合わせる場合は`E2E_FIXED_INPUTS=1 pnpm test:e2e:block-editor`で27件を選択する。ローカル検証先は`E2E_GUI_ROOT`、外部検証先は`E2E_BASE_URL`と完全SHAの`E2E_EXPECT_GUI_REVISION` / `E2E_EXPECT_CORE_REVISION`で指定する。fixed profileは対応を期待する対象にだけ明示し、対象が未対応なら検査失敗とする。機能不足を実行時skipに置き換えない。
 

@@ -10,8 +10,11 @@ Japanese guides for usage, APIs, GUI integration, publishing, and validation rec
 
 For tabs, groups, and grids, see the [shared layout guide (Japanese)](docs/common-layout.ja.md). Standard RJSF and Source/Form use the same JSON declarations, enabled by the host's startup flag `commonLayout` (off by default).
 
-This repository also owns the [public editor and English/Japanese guides](https://kubohiroya.github.io/turbowarp-extension-data-editor/) and
-[deployment and validation tracking issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26).
+This package is a library. The downstream [TurboWarp-Plus-Editor](https://github.com/kubohiroya/turbowarp-plus-editor) owns the integrated Editor build, validation and GitHub Pages distribution. This repository no longer provides GitHub Pages; its former URL does not serve an Editor or a redirect.
+
+<p><a class="twpe-edit-button" href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=en"><img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg" width="32" height="32" alt=""> Edit in TurboWarp-Plus-Editor</a></p>
+
+See the [TurboWarp-Plus-Editor README](https://github.com/kubohiroya/turbowarp-plus-editor#edit-button) for the reusable button HTML and stylesheet.
 
 ## Standard JSON Schema editor
 
@@ -127,12 +130,12 @@ For `.sb3` saving, reloading through `project_url` and the OS file picker, Engli
 
 Supported GUIs provide dialogs, source forms, shared layouts, fixed inputs, descendant editing, and batch security confirmation by default.
 These are available at the normal `editor.html?lang=ja` URL without activation switches. Low-level API host capability negotiation remains in place.
-To roll back, revert the GUI changes together with the public page's GUI pin.
+To roll back, revert the GUI changes together with TurboWarp-Plus-Editor's pinned source configuration.
 Committed values are stored in existing arguments. UI state, drafts, functions, and revisions are not added to project data.
 
 ## webpack 4 / E2E
 
-See the [webpack 4 distribution and configuration API (Japanese)](docs/webpack4.md) and [GUI integration E2E and CI procedures (Japanese)](docs/block-editor-e2e.md). This shared repository manages the custom editor UI, compatibility builds, and E2E tests; the GUI retains explicit host integration and CI calls.
+See the [webpack 4 distribution and configuration API (Japanese)](docs/webpack4.md) and [GUI integration E2E and CI procedures (Japanese)](docs/block-editor-e2e.md). This shared repository manages the custom editor UI and compatibility builds. The GUI owns host integration, and TurboWarp-Plus-Editor owns integrated builds, E2E tests and distribution.
 
 ## Shared Schema types and diagnostic conversion
 

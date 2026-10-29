@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {readFileSync} from 'node:fs';
 import YAML from 'yaml';
-import {captureGUI, compareGUI, guiRepository} from '../../scripts/ci/gui-snapshot.mjs';
 import {repository, fixtureFile, probeFile, scenarios} from '../../scripts/ci/assert-rerun-probe.mjs';
 import {verifyWeekly, checkPermissions, commentBody, requestAPI, evidenceAPI, driverFile} from '../../scripts/ci/report-weekly-ci.mjs';
 
+const otherRepository = 'example/unrelated-project';
 const revision = 'a'.repeat(40), reporterSha = 'b'.repeat(40);
 const date = n => new Date(1_800_000_000_000 + n * 1000).toISOString();
 const log = permissions => `##[group]GITHUB_TOKEN Permissions\n${Object.entries({...permissions, Metadata: 'read'})
@@ -13,9 +13,6 @@ const log = permissions => `##[group]GITHUB_TOKEN Permissions\n${Object.entries(
 const identity = (id, workflow, title) => ({id, workflow_id: workflow, head_sha: revision, head_branch: 'main',
     repository: {full_name: repository}, head_repository: {full_name: repository}, event: 'workflow_dispatch',
     run_attempt: 1, status: 'completed', conclusion: 'success', display_title: title});
-const snapshot = n => ({repository: guiRepository, observedAt: date(n), status: 'observed', develop: 'c'.repeat(40),
-    deployment: {id: 55, sha: 'c'.repeat(40)}, buildInfo: {repository: `https://github.com/${guiRepository}`,
-        revision: 'c'.repeat(40), coreRepository: `https://github.com/${repository}`, coreRevision: 'd'.repeat(40)}});
 
 function fixture() {
     const root = {...identity(10, 1), event: 'schedule', created_at: date(0), run_started_at: date(1), updated_at: date(100)};
@@ -23,7 +20,7 @@ function fixture() {
     const runs = new Map([[10, root], [20, ci]]), jobSets = new Map([['10-1', [{id: 100, name: 'orchestrate'}]]]);
     const logs = new Map([[100, log({Actions: 'write', Contents: 'read'})]]), artifacts = new Map();
     const e = {repository, sha: revision, branch: 'main', suite: '10-1', trigger: 'schedule', schedule: '37 2 * * 1',
-        status: 'success', fixture: ci, probes: {}, pending: {}, gui: {before: snapshot(2), after: snapshot(99)},
+        status: 'success', fixture: ci, probes: {}, pending: {},
         mutations: ['dispatch', 'dispatch', 'rerun', 'dispatch', 'dispatch', 'rerun', 'dispatch']
             .map(operation => ({operation, ...(operation === 'rerun' ? {runId: 20} : {})}))};
     let id = 30;
@@ -78,25 +75,19 @@ function fixture() {
     return {root, ci, runs, e, api, logs, jobSets, execute: () => verifyWeekly(10, {api, reporterSha}), freshReads: () => freshReads};
 }
 
-test('a genuine completed schedule is independently verified with exact artifacts, permissions and GUI snapshots', async () => {
+test('a genuine completed schedule is independently verified with exact artifacts, permissions', async () => {
     const h = fixture(), result = await h.execute();
     assert.equal(result.status, 'verified-success'); assert.equal(result.eligible, true);
-    assert.equal(result.gui.comparison, 'unchanged'); assert.equal(result.observers.length, 4);
+    assert.equal(result.observers.length, 4);
+    assert.equal(result.gui, undefined);
     assert.equal(h.freshReads(), 2);
     assert.match(commentBody(result), /ci-weekly-report:10:1/);
     assert.match(commentBody(result), /検証結果の草案/);
 });
 
-test('GUI changes are reported distinctly without attributing them to the test', async () => {
-    const h = fixture(); h.e.gui.after.develop = 'e'.repeat(40);
-    const result = await h.execute();
-    assert.equal(result.status, 'verified-success'); assert.equal(result.gui.comparison, 'changed');
-    assert.match(commentBody(result), /完全不変とは扱わない/);
-});
-
 for (const [name, mutate] of Object.entries({
     'manual source': h => {h.root.event = 'workflow_dispatch';},
-    'wrong repo': h => {h.root.repository.full_name = guiRepository;},
+    'wrong repo': h => {h.root.repository.full_name = otherRepository;},
     'wrong branch': h => {h.root.head_branch = 'feature';},
     'wrong workflow': h => {h.root.workflow_id = 7;},
     'pending latest attempt': h => {h.root.run_attempt = 2; h.root.status = 'in_progress';},
@@ -108,9 +99,6 @@ for (const [name, mutate] of Object.entries({
     'premature sentinel': h => {h.e.pending['pending-failure'].jobs.push({name: 'publish-sentinel', status: 'in_progress'});},
     'early success sentinel': h => {h.jobSets.get('33-1')[1].started_at = date(3);},
     'fixture advanced': h => {h.ci.run_attempt = 4;},
-    'missing GUI observations': h => {delete h.e.gui;},
-    'unavailable GUI': h => {h.e.gui.after.status = 'unavailable';},
-    'reversed GUI observations': h => {h.e.gui.before.observedAt = date(101);},
     'publication permission': h => {h.logs.set(100, log({Actions: 'write', Contents: 'read', Pages: 'write'}));},
     'OIDC permission': h => {h.logs.set(330, log({Actions: 'read', Contents: 'read', 'IdToken': 'write'}));},
     'missing runtime permissions': h => {h.logs.set(100, 'empty');},
@@ -147,20 +135,6 @@ test('permission parsing requires an exact allowlist, including unknown write sc
     checkPermissions(log({Contents: 'read'}), {Contents: 'read'});
     assert.throws(() => checkPermissions(log({Contents: 'read', Deployments: 'write'}), {Contents: 'read'}));
     assert.throws(() => checkPermissions(log({Contents: 'read'}) + log({Contents: 'read'}), {Contents: 'read'}));
-});
-
-test('public GUI snapshots do not receive credentials and API failures stay unavailable', async () => {
-    const calls = [], expected = snapshot(2);
-    const fetchImpl = async (url, options) => {
-        calls.push({url, options});
-        const value = url.includes('/branches/') ? {commit: {sha: expected.develop}} :
-            url.includes('/deployments?') ? [expected.deployment] : expected.buildInfo;
-        return {ok: true, json: async () => value};
-    };
-    const value = await captureGUI({fetchImpl, now: () => Date.parse(date(2))});
-    assert.equal(compareGUI(value, expected), 'unchanged');
-    assert.ok(calls.every(c => !c.options.headers.Authorization && c.options.redirect === 'error'));
-    assert.equal((await captureGUI({fetchImpl: async () => {throw new Error('secret');}})).status, 'unavailable');
 });
 
 test('signed downloads never forward tokens; errors never expose API responses', async () => {
@@ -230,7 +204,7 @@ test('the reader uses only GET and refuses other repositories or App endpoints',
     await api(`/repos/${repository}/actions/runs/10`, 'POST', {body: 'ignored'});
     assert.equal(calls[0].options.method, 'GET');
     assert.equal(calls[0].options.body, undefined);
-    await assert.rejects(api('/repos/kubohiroya/scratch-gui/issues/12/comments'));
+    await assert.rejects(api('/repos/example/unrelated-project/issues/12/comments'));
     await assert.rejects(api('/app/installations/1/access_tokens'));
     assert.equal(calls.length, 1);
 });
@@ -256,6 +230,6 @@ test('same-repository reporting needs no App and writes only the approved operat
     h.root.run_attempt = 2;
     await assert.rejects(postLocalReport(report, env, {fetchImpl}));
     await assert.rejects(postLocalReport(report, {...env, CI_RERUN_REPORT_ENABLED: ''}, {fetchImpl}));
-    await assert.rejects(postLocalReport(report, {...env, GITHUB_REPOSITORY: guiRepository}, {fetchImpl}));
+    await assert.rejects(postLocalReport(report, {...env, GITHUB_REPOSITORY: otherRepository}, {fetchImpl}));
     assert.equal(posts, 1);
 });

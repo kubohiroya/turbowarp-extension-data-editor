@@ -4,7 +4,7 @@
 
 対象は [scratch-gui Issue #2](https://github.com/kubohiroya/scratch-gui/issues/2)。
 共通基盤の[階層セッションAPI](descendants.md)へ接続します。
-共通基盤の固定SHAはscratch-guiのCI・Pages・公開版E2E workflowで管理します。Pagesの出典表示はビルドした共通基盤の実SHAを使います。
+GUIは共通基盤の依存版を固定し、統合配信の固定ソースとE2EはTurboWarp-Plus-Editorで管理します。配布物の出典には共通基盤の実SHAを使います。
 この文書の `src/` とGUI用コマンドはscratch-guiを基準とします。
 
 ## 起動と切戻し

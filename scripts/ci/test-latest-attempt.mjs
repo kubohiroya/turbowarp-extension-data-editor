@@ -3,7 +3,6 @@ import {appendFileSync, mkdirSync, writeFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {fixtureFile, marker, probeFile, repository, scenarios, verifyDecision} from './assert-rerun-probe.mjs';
-import {captureGUI} from './gui-snapshot.mjs';
 
 export const weeklyCron = '37 2 * * 1';
 
@@ -242,15 +241,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
         writeFileSync('test-results/ci-rerun-test/evidence.json', redact(JSON.stringify(state, null, 2)) + '\n');
     };
     let result;
-    let before;
     try {
         const config = configuration(process.env);
-        before = await captureGUI();
-        result = await exerciseReruns(config, {record: state => save({...state, gui: {before}})});
+        result = await exerciseReruns(config, {record: save});
     }
     catch (error) { result = latest || {status: 'failure', reason: error.message}; console.error(redact(error.message)); process.exitCode = 1; }
     finally {
-        if (before) save({...result, gui: {before, after: await captureGUI()}});
         if (!latest) save(result);
         if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
             `## Latest CI attempt test: ${result.status}\n\nTrigger: ${result.trigger || 'unverified'}\n\n` +

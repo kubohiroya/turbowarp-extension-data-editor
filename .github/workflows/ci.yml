@@ -18,7 +18,5 @@ jobs:
       - uses: pnpm/action-setup@v6
       - run: pnpm install --frozen-lockfile
       - run: node --test test/ci/*.test.mjs
-      - run: node --test test/site/*.test.cjs
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm test:e2e:infrastructure

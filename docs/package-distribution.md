@@ -16,16 +16,16 @@ importと依存のキーだけを新npm名へ移し、GUIの`file:`依存を公�
 `pnpm build`はGit HEADの完全SHA、package名、version、repositoryを `dist/build-info.json` に記録する。
 Node.jsでは `require('@kubohiroya/turbowarp-extension-data-editor/build-info')` で取得できる。
 GUIのPagesビルドとE2E準備はこのSHAを使い、node_modules内にGit checkoutを要求しない。
-CIは公開配布物のSHAと、検証手順を所有する共通checkoutの固定SHAを比較する。
+統合CIは下流のTurboWarp-Plus-Editorが所有し、公開配布物のSHAと固定ソース設定を照合する。
 
 公開前は変更をcommitして作業ツリーが空であることを確認する。`npm pack`のprepackはビルドを実行するため、必ず公開対象のcommit上でpackする。
 
 `0.2.2`はPR #41の編集見出し・項目操作・key-value表示の修正を配布します。
 旧`0.2.1`のworking-tree release overlayを示す固定`gitHead` / `x-turbowarp-source`は引き継がず、cleanな公開コミットから生成する`dist/build-info.json`をソース照合に使用します。
-GUIのmanifestとlockをnpm完全versionへ揃えた後、サイトのGUI pinと実配布物のcore revisionを更新します。
+GUIのmanifestとlockをnpm完全versionへ揃えた後、TurboWarp-Plus-EditorのGUI pinと実配布物のcore revisionを更新します。
 受け入れ基準は全共通テスト・実ScratchBlocks/VMの境界・8公開入口・tarball照合、GUIの対象テストとproduction build、公開前後のE2E成功です。
 
-## 初回公開の検証
+## 初回公開の検証（移管前の履歴）
 
 - `pnpm typecheck`、`pnpm test`、`pnpm test:e2e:infrastructure`。
 - `npm pack`で内容を確認し、tarballをGit checkout外のconsumerへinstallする。

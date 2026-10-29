@@ -10,8 +10,11 @@ TurboWarp拡張が扱う構造化データを、フォームや独自UIで編集
 
 タブ・グループ・グリッドは[共通レイアウトガイド](docs/common-layout.ja.md)を参照してください。標準RJSFとSource/Formで同じJSON宣言を使用し、ホストの起動時フラグ `commonLayout` で有効にします（既定OFF）。
 
-[公開エディター・日英案内](https://kubohiroya.github.io/turbowarp-extension-data-editor/) と
-[公開・検証の運用Issue #26](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/26) も本リポジトリが所有します。
+本パッケージはライブラリです。統合したEditorのビルド・検証・GitHub Pages配信は、下流の [TurboWarp-Plus-Editor](https://github.com/kubohiroya/turbowarp-plus-editor) が所有します。本リポジトリのGitHub Pages提供は廃止し、旧URLでEditorやリダイレクトを提供しません。
+
+<p><a class="twpe-edit-button" href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja"><img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg" width="32" height="32" alt=""> TurboWarp-Plus-Editorで編集</a></p>
+
+ボタンのHTMLとスタイルは [TurboWarp-Plus-EditorのREADME](https://github.com/kubohiroya/turbowarp-plus-editor#edit-button) を参照してください。
 
 ## 標準の JSON Schema エディター
 
@@ -127,12 +130,12 @@ npm install --save-exact @kubohiroya/turbowarp-extension-data-editor@0.2.2
 
 対応GUIはダイアログ、ソースフォーム、共通レイアウト、固定入力、子孫編集、一括セキュリティ確認を標準で提供します。
 通常の `editor.html?lang=ja` で利用でき、有効化用URLスイッチは不要です。低水準APIのhost能力交渉は維持します。
-切戻しはGUIの変更と公開ページのGUI pinを一組でrevertします。
+切戻しはGUIの変更とTurboWarp-Plus-Editorの固定ソース設定を対応させてrevertします。
 確定値は既存引数へ保存し、UI・下書き・関数・revision をプロジェクトデータへ追加しません。
 
 ## webpack 4 / E2E
 
-[webpack 4配布物と設定API](docs/webpack4.md)、[GUI接続E2EとCIの実行手順](docs/block-editor-e2e.md)を参照。専用編集UIから互換ビルド・E2Eまで共通側で管理し、GUIには明示的なホスト接続とCI呼出しを残す。
+[webpack 4配布物と設定API](docs/webpack4.md)、[GUI接続E2EとCIの実行手順](docs/block-editor-e2e.md)を参照。本リポジトリは専用編集UIと互換ビルドを管理します。GUIはホスト接続、TurboWarp-Plus-Editorは統合ビルド・E2E・配信を管理します。
 
 ## Schemaの共通型と診断変換
 
