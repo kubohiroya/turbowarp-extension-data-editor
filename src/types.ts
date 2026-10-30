@@ -62,6 +62,7 @@ export interface SessionState {
 }
 
 export interface EditorViewContext {
+  getSnapshot?(): BlockSnapshot;
   getDraft(): JsonObject;
   /** Fixed views obtain only safe presentation data, never live host objects. */
   getFixedInputView?(): FixedInputViewDescription | undefined;
@@ -80,6 +81,14 @@ export interface EditorDescriptor {
   readonly editorId: string;
   readonly opcodes: readonly string[];
   readonly editableArguments: readonly string[];
+}
+
+/** Optional presentation companion. It shares the draft and lifetime of the existing form. */
+export interface BlockPreviewDefinition {
+  readonly extensionId: string;
+  readonly opcodes: readonly string[];
+  mount(container: HTMLElement, context: EditorViewContext, snapshot: BlockSnapshot): () => void;
+  hover?(anchor: HTMLElement | SVGElement, snapshot: BlockSnapshot): () => void;
 }
 
 export interface EditorDefinition extends EditorDescriptor {

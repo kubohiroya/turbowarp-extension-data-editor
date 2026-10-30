@@ -141,6 +141,13 @@ export class EditorSession implements EditorViewContext {
     return () => { this.#listeners.delete(listener); };
   }
 
+  getSnapshot(): BlockSnapshot {
+    this.#assertOpen();
+    return isFixedInputEditor(this.#definition)
+      ? captureFixedSnapshot(this.#snapshot as FixedBlockSnapshot, this.reference, this.#definition)
+      : captureSnapshot(this.#snapshot, this.reference);
+  }
+
   mount(container: HTMLElement): () => void {
     return this.#view.mount(container, this.#definition.mount, this);
   }

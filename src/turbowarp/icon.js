@@ -1,5 +1,5 @@
 // Decorate one known FieldImage; never search or intercept unrelated workspace DOM.
-const bindBlockEditorIcon = ({element, label, canOpen, onOpen}) => {
+const bindBlockEditorIcon = ({element, label, canOpen, onOpen, onHover = () => {}, onLeave = () => {}}) => {
     const attributes = ['role', 'tabindex', 'aria-label', 'data-block-editor-icon'];
     const previous = attributes.map(name => element.getAttribute(name));
     const oldCursor = element.style.cursor;
@@ -40,7 +40,10 @@ const bindBlockEditorIcon = ({element, label, canOpen, onOpen}) => {
             if (!event.repeat) onOpen();
         }
     };
+    const enter = () => { if (canOpen()) onHover?.(); };
+    const leave = () => onLeave?.();
     const listeners = [
+        ['pointerenter', enter], ['pointerleave', leave], ['focus', enter], ['blur', leave],
         ['pointerdown', down], ['pointermove', move], ['pointerup', up], ['pointercancel', cancel],
         ['mousedown', stop], ['mouseup', stop], ['click', stop], ['dblclick', stop],
         ['touchstart', stop], ['touchend', stop], ['touchmove', stop], ['keydown', key]

@@ -21,6 +21,7 @@ export class EditorView {
       subscriptions.clear();
     };
     const context: EditorViewContext = Object.freeze({
+      ...(owner.getSnapshot ? {getSnapshot: () => { assertMounted(); return owner.getSnapshot!(); }} : {}),
       getDraft: () => owner.getDraft(),
       ...(owner.getFixedInputView ? {getFixedInputView: () => {
         assertMounted();
