@@ -10,6 +10,8 @@ const openBlockEditorSession = ({registry, reference, host, descendants}) => {
     const snapshot = host.readBlock ? host.readBlock(reference) : null;
     // A fixed registration owns only this block; legacy aggregate traversal stays fail-closed.
     if (fixedDeclaration(registry, snapshot)) return supportsFixedInputEditing(host) ? registry.open(reference, host) : undefined;
+    // A preview owns this icon's scene/action, not a separate live renderer for every descendant.
+    if (snapshot && registry.resolvePreview?.(snapshot.opcode)) return registry.open(reference, host);
     return descendants && supportsDescendantEditing(host) ?
         registry.openDescendants(reference, host) : registry.open(reference, host);
 };
@@ -24,6 +26,14 @@ const createBlockEditorBridge = ({ScratchBlocks, workspace, vm, service, label, 
         enableFixedInputs: fixedInputs,
         onError});
     const decorations = new Map();
+    let stopHover = null;
+    const clearHover = () => {
+        const stop = stopHover;
+        stopHover = null;
+        if (stop) {
+            try { stop(); } catch (error) { onError(error); }
+        }
+    };
     let disposed = false;
     let timer = null;
     let activeSession = null;
@@ -72,6 +82,7 @@ const createBlockEditorBridge = ({ScratchBlocks, workspace, vm, service, label, 
         return snapshot && Object.values(snapshot.arguments).every(slot => slot.kind === 'literal');
     };
     const open = block => {
+        clearHover();
         if (activeSession && ['editing', 'saving'].includes(activeSession.getState().status)) return;
         const reference = {targetId: vm.editingTarget.id, blockId: block.id};
         try {
@@ -127,10 +138,25 @@ const createBlockEditorBridge = ({ScratchBlocks, workspace, vm, service, label, 
                 element: field.fieldGroup_,
                 label,
                 canOpen: () => available(block),
-                onOpen: () => open(block)
+                onOpen: () => open(block),
+                onHover: () => {
+                    if (!available(block) || activeSession && ['editing', 'saving'].includes(activeSession.getState().status)) return;
+                    clearHover();
+                    const preview = service.registry.resolvePreview?.(block.type);
+                    const snapshot = host.readBlock({targetId: vm.editingTarget.id, blockId: block.id});
+                    if (preview?.hover && snapshot) {
+                        try {
+                            const stop = preview.hover(field.fieldGroup_, snapshot);
+                            if (typeof stop !== 'function') throw new TypeError('hover() must return a cleanup function.');
+                            stopHover = stop;
+                        } catch (error) { onError(error); }
+                    }
+                },
+                onLeave: clearHover
             });
             decorations.set(block.id, {field,
                 cleanup: () => {
+                    clearHover();
                     unbind();
                     if (field.imageElement_) field.imageElement_.tooltip = tooltip;
                 }});
@@ -143,6 +169,7 @@ const createBlockEditorBridge = ({ScratchBlocks, workspace, vm, service, label, 
         }
     };
     const schedule = () => {
+        clearHover();
         checkSession();
         clearTimeout(timer);
         timer = setTimeout(refresh, 0);
@@ -168,6 +195,7 @@ const createBlockEditorBridge = ({ScratchBlocks, workspace, vm, service, label, 
         refresh,
         dispose: () => {
             disposed = true;
+            clearHover();
             clearTimeout(timer);
             unregister();
             workspace.removeChangeListener(schedule);

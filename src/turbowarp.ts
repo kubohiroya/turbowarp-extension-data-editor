@@ -89,6 +89,8 @@ export function bindBlockEditorIcon(options: {
   readonly label: string;
   readonly canOpen: () => boolean;
   readonly onOpen: () => void;
+  readonly onHover?: () => void;
+  readonly onLeave?: () => void;
 }): () => void {
   return bindIcon(options);
 }

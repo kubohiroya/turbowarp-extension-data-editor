@@ -1,4 +1,6 @@
 import {captureReference, captureSnapshot} from './data.js';
+import type {BlockPreviewDefinition} from './types.js';
+import {withBlockPreview} from './preview.js';
 import {EditorSession} from './session.js';
 import {DescendantSession} from './descendants.js';
 import {supportsDescendantEditing} from './descendant-types.js';
@@ -14,10 +16,39 @@ import {supportsFixedInputEditing} from './fixed-input-types.js';
 import type {FixedInputDeclaration, FixedInputEditorDefinition} from './fixed-input-types.js';
 
 export class EditorRegistry {
+  #previews = new Map<string, BlockPreviewDefinition>();
   #editors = new Map<string, EditorDefinition>();
   #opcodes = new Map<string, EditorDefinition>();
   #fixedDeclarations = new Map<EditorDefinition, FixedInputDeclaration>();
   #changes = new Set<() => void>();
+
+  registerPreview(definition: BlockPreviewDefinition): () => void {
+    if (!definition || !/^[a-z0-9]+$/i.test(definition.extensionId) ||
+        !Array.isArray(definition.opcodes) || !definition.opcodes.length ||
+        new Set(definition.opcodes).size !== definition.opcodes.length ||
+        definition.opcodes.some(op => typeof op !== 'string' || !op.startsWith(`${definition.extensionId}_`) ||
+          op === `${definition.extensionId}_` || this.#previews.has(op)) ||
+        typeof definition.mount !== 'function' ||
+        (definition.hover !== undefined && typeof definition.hover !== 'function')) {
+      throw new TypeError('Invalid or duplicate block preview.');
+    }
+    const entry = Object.freeze({...definition, opcodes: Object.freeze([...definition.opcodes])});
+    for (const op of entry.opcodes) this.#previews.set(op, entry);
+    this.#notifyChanges();
+    return () => {
+      if (this.#previews.get(entry.opcodes[0]!) !== entry) return;
+      for (const op of entry.opcodes) this.#previews.delete(op);
+      this.#notifyChanges();
+    };
+  }
+
+  resolvePreview(opcode: string): BlockPreviewDefinition | undefined { return this.#previews.get(opcode); }
+
+  #definition(opcode: string): EditorDefinition | undefined {
+    const original = this.#opcodes.get(opcode);
+    const preview = this.#previews.get(opcode);
+    return preview ? withBlockPreview(original, preview, opcode) : original;
+  }
 
   register(definition: EditorDefinition): () => void {
     if (isFixedInputEditor(definition)) throw new TypeError('Fixed input editors require registerFixed().');
@@ -81,7 +112,7 @@ export class EditorRegistry {
   }
 
   resolve(opcode: string): EditorDescriptor | undefined {
-    const entry = this.#opcodes.get(opcode);
+    const entry = this.#definition(opcode);
     if (!entry) return undefined;
     return Object.freeze({
       apiVersion: entry.apiVersion, extensionId: entry.extensionId, editorId: entry.editorId,
@@ -99,7 +130,7 @@ export class EditorRegistry {
     const capturedReference = captureReference(reference);
     const live = host.readBlock(capturedReference);
     if (!live) return undefined;
-    const entry = this.#opcodes.get(live.opcode);
+    const entry = this.#definition(live.opcode);
     if (!entry) {
       // Preserve legacy snapshot validation even when no editor is registered.
       captureSnapshot(live, capturedReference);
@@ -110,14 +141,14 @@ export class EditorRegistry {
       const fixed = host.fixedInputs!.readBlock(capturedReference, entry);
       if (!fixed || fixed.opcode !== live.opcode) return undefined;
       const snapshot = captureFixedSnapshot(fixed, capturedReference, entry);
-      return new EditorSession(entry, snapshot, host, () => this.#opcodes.get(snapshot.opcode) === entry, listener => {
+      return new EditorSession(entry, snapshot, host, () => this.#definition(snapshot.opcode) === entry, listener => {
         this.#changes.add(listener);
         return () => {this.#changes.delete(listener);};
       });
     }
     const snapshot = captureSnapshot(live, capturedReference);
-    return new EditorSession(entry, snapshot, host, isPreparedEditor(entry)
-      ? () => this.#opcodes.get(snapshot.opcode) === entry : undefined);
+    return new EditorSession(entry, snapshot, host, isPreparedEditor(entry) || this.#previews.has(snapshot.opcode)
+      ? () => this.#definition(snapshot.opcode) === entry : undefined);
   }
 
   openDescendants(reference: BlockReference, host: BlockEditorHost, limits?: DescendantLimits): DescendantSession | undefined {
@@ -128,10 +159,10 @@ export class EditorRegistry {
     const live = port.readSubtree(capturedReference);
     if (!live) return undefined;
     const captured = captureSubtree(live, capturedReference, resolvedLimits);
-    const root = this.#opcodes.get(captured.snapshot.nodes[0]!.block.opcode);
+    const root = this.#definition(captured.snapshot.nodes[0]!.block.opcode);
     if (!root || isFixedInputEditor(root)) return undefined;
     return new DescendantSession(captured, port, opcode => {
-      const entry = this.#opcodes.get(opcode);
+      const entry = this.#definition(opcode);
       return entry && !isFixedInputEditor(entry) ? entry : undefined;
     }, listener => {
       this.#changes.add(listener);

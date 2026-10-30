@@ -175,7 +175,12 @@ export function inspectFixedArgument({ScratchBlocks, block, vmBlock, target, arg
     const raw = own(stored, 'value');
     if (!safeField(field, Class)) return unavailable('unsupported', 'The field class, methods or validator is unsupported.', raw);
     const value = inherited(Class.prototype, 'getValue').call(field);
-    if (!Object.is(value, raw)) return null;
+    // SB3 numeric primitives remain numbers in the VM while FieldNumber displays a string.
+    // Preserve the original VM primitive in the snapshot; only equivalent native numeric text
+    // is a synchronized representation. Other field families still require exact raw identity.
+    const numericPrimitive = kind === 'number' && typeof raw === 'number' && Number.isFinite(raw) &&
+        typeof value === 'string' && token.test(value.trim()) && Number(value) === raw;
+    if (!Object.is(value, raw) && !numericPrimitive) return null;
     if (typeof value !== 'string') return unavailable('unsupported', 'The native field value is not a string.', raw);
     const allowedValues = kind === 'menu' ? staticValues(field) : undefined;
     if (kind === 'menu' && !allowedValues) return unavailable('unsupported', 'Dynamic or nonstandard menus are unsupported.', raw);
@@ -186,7 +191,7 @@ export function inspectFixedArgument({ScratchBlocks, block, vmBlock, target, arg
         restoreHandles: inherited(Class.prototype, 'updateSliderHandles_'),
         restoreDom: inherited(Class.prototype, 'updateDom_'),
         ...(kind === 'color' ? {restoreState: colorState(owner, field)} : {})};
-    return {slot: {kind: 'literal', value}, metadata: {role, source: direct ? 'field' : 'shadow',
+    return {slot: {kind: 'literal', value: numericPrimitive ? raw : value}, metadata: {role, source: direct ? 'field' : 'shadow',
         identity: JSON.stringify(sourceIdentity), field: {blockId: owner.id, name, type: {text: 'FieldTextInput', number: 'FieldNumber', menu: 'FieldDropdown', color: 'FieldColourSlider'}[kind]}},
     ...(role === 'editable' ? {binding} : {}), signatureParts: [...sourceIdentity, observedFields]};
 }

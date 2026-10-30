@@ -257,6 +257,7 @@ export class DescendantSession {
     const listeners = new Set<() => void>();
     const editor: DescendantNodeEditor = Object.freeze({
       reference: descriptor.reference,
+      getSnapshot: () => snapshot,
       getDraft: () => { this.#assertOpen(); return cloneJson(record.draft); },
       setDraft: (draft: JsonObject) => {
         this.#assertEditable();

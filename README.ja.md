@@ -10,6 +10,8 @@ TurboWarp拡張が扱う構造化データを、フォームや独自UIで編集
 
 タブ・グループ・グリッドは[共通レイアウトガイド](docs/common-layout.ja.md)を参照してください。標準RJSFとSource/Formで同じJSON宣言を使用し、ホストの起動時フラグ `commonLayout` で有効にします（既定OFF）。
 
+既存フォームと下書きを共有する視覚プレビュー、アイコンのホバー表示は[ブロックプレビュー](docs/block-preview.md)を参照してください。
+
 本パッケージはライブラリです。統合したEditorのビルド・検証・GitHub Pages配信は、下流の [TurboWarp-Plus-Editor](https://github.com/kubohiroya/turbowarp-plus-editor) が所有します。本リポジトリのGitHub Pages提供は廃止し、旧URLでEditorやリダイレクトを提供しません。
 
 <p><a class="twpe-edit-button" href="https://kubohiroya.github.io/turbowarp-plus-editor/editor.html?lang=ja"><img src="https://kubohiroya.github.io/turbowarp-plus-editor/assets/icon.svg" width="32" height="32" alt=""> TurboWarp-Plus-Editorで編集</a></p>

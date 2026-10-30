@@ -37,7 +37,7 @@ import {AddItemButton, ArrayItem, ItemMenu, additionalItemTemplate, numberedObje
   valueFieldTemplate, layoutObjectTemplate, compactDescriptionTemplate, compactArrayTitleTemplate, compactArrayTemplate,
   compactCheckboxWidget} from './rjsf-templates.js';
 import type {
-  BlockSnapshot, EditorDefinition, JsonObject, JsonValue, ValidationIssue
+  BlockPreviewDefinition, BlockSnapshot, EditorDefinition, JsonObject, JsonValue, ValidationIssue
 } from './types.js';
 
 // RJSF v5 exposes CommonJS to Node and ESM to browser bundlers.
@@ -118,6 +118,7 @@ export function createSchemaBundleEditor<C>(options: SchemaBundleEditorOptions<C
 export interface BlockEditorRegistrationAPI {
   readonly apiVersion: typeof EDITOR_API_VERSION;
   register(definition: EditorDefinition | SchemaEditorOptions): () => void;
+  registerPreview?(definition: BlockPreviewDefinition): () => void;
   registerSchema(definition: SchemaEditorOptions): () => void;
   registerSchemaBundle?<C>(definition: SchemaBundleEditorOptions<C>): () => void;
   registerSourceEditor?<C = null>(definition: SourceEditorOptions<C>): () => void;
@@ -164,6 +165,12 @@ export function createBlockEditorService(options?: EditorFeatureFlags & {readonl
   const api: SourceBlockEditorRegistrationAPI = Object.freeze({
     ...fixed,
     apiVersion: EDITOR_API_VERSION,
+    registerPreview: (definition: BlockPreviewDefinition) => {
+      const remove = registry.registerPreview(definition);
+      notify();
+      let active = true;
+      return () => { if (active) { active = false; remove(); notify(); } };
+    },
     register: (definition: EditorDefinition | SchemaEditorOptions) => {
       const custom = definition as EditorDefinition;
       const editor = !custom.mount && Object.hasOwn(definition, 'schema')
