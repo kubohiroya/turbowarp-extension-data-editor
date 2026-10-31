@@ -20,3 +20,5 @@ jobs:
       - run: node --test test/ci/*.test.mjs
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: node --test test/e2e/layout/dialog-window.mjs
