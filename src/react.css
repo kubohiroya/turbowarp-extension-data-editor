@@ -349,3 +349,73 @@
     color: var(--block-editor-error-text, #a61b1b);
     margin-bottom: 0;
 }
+
+/* Window controls also work with a host modal rendered through a portal. */
+:global([data-block-editor-window]) {
+    position: fixed;
+    top: min(60px, 5vh);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin: 0;
+    max-width: 100vw;
+    max-height: calc(100dvh - min(60px, 5vh) - 16px);
+}
+:global([data-block-editor-window-frame]) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+}
+:global([data-block-editor-titlebar]) {
+    flex: 0 0 auto;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+}
+:global([data-block-editor-titlebar]) > div:first-child { cursor: inherit; }
+:global([data-block-editor-window]) :global([data-block-editor-body]) {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    box-sizing: border-box;
+}
+:global([data-block-editor-window]) .editor-body { flex: 1 1 auto; }
+:global([data-block-editor-maximize]) {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-inline-end: 8px;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: 5px;
+    background: transparent;
+    color: inherit;
+    font: 24px/1 system-ui, sans-serif;
+    cursor: pointer;
+}
+:global([data-block-editor-maximize]):focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+:global([data-block-editor-maximized]) { border-radius: 0; max-height: 100dvh; }
+:global([data-block-editor-maximized]) :global([data-block-editor-titlebar]) { cursor: default; }
+:global([data-block-editor-dragging]), :global([data-block-editor-dragging]) * { user-select: none; }
+:global([data-block-editor-resize]) { position: absolute; z-index: 10; touch-action: none; }
+:global([data-block-editor-resize="n"]), :global([data-block-editor-resize="s"]) { left: 9px; right: 9px; height: 7px; cursor: ns-resize; }
+:global([data-block-editor-resize="n"]) { top: 0; }
+:global([data-block-editor-resize="s"]) { bottom: 0; }
+:global([data-block-editor-resize="e"]), :global([data-block-editor-resize="w"]) { top: 9px; bottom: 9px; width: 7px; cursor: ew-resize; }
+:global([data-block-editor-resize="e"]) { right: 0; }
+:global([data-block-editor-resize="w"]) { left: 0; }
+:global([data-block-editor-resize="ne"]), :global([data-block-editor-resize="se"]),
+:global([data-block-editor-resize="sw"]), :global([data-block-editor-resize="nw"]) { width: 10px; height: 10px; }
+:global([data-block-editor-resize="ne"]), :global([data-block-editor-resize="nw"]) { top: 0; }
+:global([data-block-editor-resize="se"]), :global([data-block-editor-resize="sw"]) { bottom: 0; }
+:global([data-block-editor-resize="ne"]), :global([data-block-editor-resize="se"]) { right: 0; }
+:global([data-block-editor-resize="nw"]), :global([data-block-editor-resize="sw"]) { left: 0; }
+:global([data-block-editor-resize="ne"]), :global([data-block-editor-resize="sw"]) { cursor: nesw-resize; }
+:global([data-block-editor-resize="nw"]), :global([data-block-editor-resize="se"]) { cursor: nwse-resize; }
+:global([data-block-editor-maximized]) > :global([data-block-editor-resize]) { display: none; }

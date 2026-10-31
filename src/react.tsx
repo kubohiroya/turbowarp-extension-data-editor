@@ -1,4 +1,5 @@
 import bindBlockEditorFieldErrors from './field-errors.js';
+import {attachEditorDialogWindow} from './dialog-window.js';
 export {default as bindBlockEditorFieldErrors} from './field-errors.js';
 import * as React from 'react';
 import {BlockEditorConflictError} from './types.js';
@@ -39,6 +40,8 @@ export interface EditorDialogMessages {
   readonly structuralNode: string;
   /** Fixed forms retain technical diagnostics in the API while showing a localized summary. */
   readonly invalidInput?: string;
+  readonly maximize?: string;
+  readonly restore?: string;
 }
 export interface EditorNodeAppearance {
   readonly name?: string;
@@ -185,6 +188,7 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
   private removeListener = () => {};
   private unmountBody: (() => void) | undefined;
   private stopFieldErrors: (() => void) | undefined;
+  private stopWindow: (() => void) | undefined;
   constructor(props: BlockEditorDialogProps) {
     super(props);
     this.state = {...props.session.getState(), mountFailed: false};
@@ -204,6 +208,7 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
     if (this.focusFrame !== undefined) cancelAnimationFrame(this.focusFrame);
     this.removeListener();
     this.stopFieldErrors?.();
+    this.stopWindow?.();
     try { this.unmountBody?.(); }
     catch (error) { this.props.onError?.(error); }
     finally { this.props.session.dispose(); }
@@ -215,6 +220,11 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
   private mountBody(): void {
     if (!this.body || this.unmountBody || this.state.mountFailed) return;
     try {
+      if (!this.stopWindow) this.stopWindow = attachEditorDialogWindow(this.body, {
+        headerClassName: this.props.styles.header,
+        maximize: this.props.messages.maximize,
+        restore: this.props.messages.restore
+      });
       if (!this.stopFieldErrors) this.stopFieldErrors = bindBlockEditorFieldErrors(this.body);
       if (typeof this.props.session.getNodes !== 'function') this.unmountBody = this.props.session.mount!(this.body);
       // The modal establishes its focus scope after creating the portal.
@@ -257,7 +267,7 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
     return <ModalComponent className={`${styles.modalContent || ''} ${hierarchy ? styles.hierarchyModal : ''} ${
       this.props.className || ''}`} contentLabel={title} {...(appearance?.iconURI ? {headerImage: appearance.iconURI} : {})}
       headerClassName={styles.header} id="blockEditorModal" onRequestClose={this.handleClose}>
-      <div aria-busy={saving} className={styles.body}
+      <div aria-busy={saving} className={styles.body} data-block-editor-body=""
         onCompositionStart={() => { this.composing = true; }} onCompositionEnd={() => { this.composing = false; }}
         onKeyDownCapture={event => {
           if (this.composing || event.nativeEvent.isComposing || event.keyCode === 229) event.stopPropagation();
