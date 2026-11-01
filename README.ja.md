@@ -160,3 +160,7 @@ Prepared source editing is an optional host capability. See [the source/form con
 ## 固定入力とGUI接続（S3-1〜S3-3）
 
 固定入力の型・Schema検査・同期prepared契約を追加しています。`createBlockEditorService({fixedInputs: true})`の明示時だけ新しい登録APIを提供し、対応hostがない場合は開けません。lower-level hostの`enableFixedInputs: true`で標準fieldの読取・原子的保存を利用できます。固定フォームとGUIの既定OFFフラグ接続も含みます。各拡張は正本Schema・codec・登録を所有します。[固定入力の契約](docs/fixed-input-contracts.md)を参照してください。配布物には元Git SHAと版更新を含むworking-tree release overlayの区分を記録しています。
+
+## ライセンス
+
+MPL-2.0。全文は [LICENSE](LICENSE) を参照してください。
