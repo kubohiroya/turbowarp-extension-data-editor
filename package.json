@@ -7,6 +7,7 @@
   "name": "@kubohiroya/turbowarp-extension-data-editor",
   "version": "0.7.0",
   "description": "Custom editor sessions and UI for structured data handled by TurboWarp extensions",
+  "license": "MPL-2.0",
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -53,7 +54,8 @@
     "README.md",
     "README.ja.md",
     "docs",
-    "webpack4.cjs"
+    "webpack4.cjs",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=24"

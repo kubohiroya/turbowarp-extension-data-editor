@@ -158,3 +158,7 @@ Prepared source editing is an optional host capability. See [the source/form con
 ## Fixed inputs and GUI integration (S3-1–S3-3)
 
 The package includes fixed-input types, Schema checks, and synchronous prepared contracts. New registration APIs are exposed only when explicitly setting `createBlockEditorService({fixedInputs: true})`, and editors cannot open without a compatible host. Setting `enableFixedInputs: true` on the lower-level host enables reading standard fields and saving atomically. Fixed-input forms and integration with the GUI's default-off flags are also included. Each extension owns its authoritative Schema, codec, and registration. See the [fixed-input contract (Japanese)](docs/fixed-input-contracts.md). Distribution artifacts record the original Git SHA separately from the working-tree release overlay that includes version updates.
+
+## License
+
+MPL-2.0. See [LICENSE](LICENSE) for the full text.
