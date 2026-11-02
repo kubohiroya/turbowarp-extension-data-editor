@@ -55,7 +55,7 @@ test('preserves the eight existing exports, CSS side effects and the copy build'
   };
   assert.deepEqual(manifest.exports, expected);
   assert.deepEqual(manifest.sideEffects, ['**/*.css']);
-  assert.equal(manifest.scripts.build, 'tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-build-info.mjs');
+  assert.equal(manifest.scripts.build, 'tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-third-party-licenses.mjs && node scripts/write-build-info.mjs');
   assert.equal(manifest.main, './dist/index.js');
   assert.equal(manifest.module, './dist/index.js');
   assert.equal(manifest.types, './dist/index.d.ts');
