@@ -64,7 +64,7 @@
   "scripts": {
     "check": "node --test test/ci/*.test.mjs && pnpm typecheck && pnpm test",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-build-info.mjs",
+    "build": "tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-third-party-licenses.mjs && node scripts/write-build-info.mjs",
     "test": "pnpm build && node --test test/*.test.mjs",
     "prepack": "npm run build",
     "prepare": "npm run build"

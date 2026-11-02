@@ -162,3 +162,5 @@ The package includes fixed-input types, Schema checks, and synchronous prepared 
 ## License
 
 MPL-2.0. See [LICENSE](LICENSE) for the full text.
+
+The `/webpack4` entry (`dist/webpack4`) bundles third-party packages such as `@rjsf/*` (Apache-2.0), `ajv` (MIT), `fast-uri` (BSD-3-Clause) and `yaml` (ISC). Each keeps its own license; the published package lists them with their license texts in `dist/webpack4/THIRD_PARTY_LICENSES.md`, which the build generates.

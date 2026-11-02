@@ -164,3 +164,5 @@ Prepared source editing is an optional host capability. See [the source/form con
 ## ライセンス
 
 MPL-2.0。全文は [LICENSE](LICENSE) を参照してください。
+
+`/webpack4` の入口（`dist/webpack4`）は、`@rjsf/*`（Apache-2.0）、`ajv`（MIT）、`fast-uri`（BSD-3-Clause）、`yaml`（ISC）などの第三者パッケージを同梱しています。それぞれ元のライセンスのままです。公開するパッケージには、その一覧とライセンスの全文を `dist/webpack4/THIRD_PARTY_LICENSES.md` として入れます（ビルドで作ります）。
