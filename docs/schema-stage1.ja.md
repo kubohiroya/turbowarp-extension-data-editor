@@ -70,11 +70,11 @@ pnpmの初回Git subdependency解決は固定取得先だけを確認してlock�
 
 ## 再検証の入口
 
-各owner checkoutをcwdとして、共通repoの`node scripts/verify-schema-package.mjs <pure entryに必要なruntime依存名...>`を実行する。出力のisolated directoryをrepo名のkey（aframe、scene-graph、3d-scene-runtime、camera-source、camera-calibration、realtime-motion-capture、time-space-sync、extension-template、editor）へ対応付けたJSONを作り、共通repoで次を実行する。
+各owner checkoutをcwdとして、共通repoの`node scripts/verify-schema-package.ts <pure entryに必要なruntime依存名...>`を実行する。出力のisolated directoryをrepo名のkey（aframe、scene-graph、3d-scene-runtime、camera-source、camera-calibration、realtime-motion-capture、time-space-sync、extension-template、editor）へ対応付けたJSONを作り、共通repoで次を実行する。
 
 ```sh
-node scripts/verify-schema-stage1.mjs /path/to/isolation-index.json
-node scripts/verify-schema-dependencies.mjs /path/to/isolation-index.json
+node scripts/verify-schema-stage1.ts /path/to/isolation-index.json
+node scripts/verify-schema-dependencies.ts /path/to/isolation-index.json
 ```
 
 個別のfixtureはowner内のtests/editor-schema.test.ts等、共通の型fixtureはtest/types/tsconfig.schema-pure.jsonとschema-compat.jsonにある。Scopeを変えず文書だけを更新した後、同じfull build/testを繰り返すことは要求しない。

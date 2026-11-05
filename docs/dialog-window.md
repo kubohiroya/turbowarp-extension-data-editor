@@ -25,8 +25,8 @@
 
 ```sh
 npm run build
-node --test test/react-dialog.test.mjs test/fixed-dialog.test.mjs
-node --test test/e2e/layout/dialog-window.mjs
+node --test test/react-dialog.test.ts test/fixed-dialog.test.ts
+node --test test/e2e/layout/dialog-window.ts
 ```
 
 ## 運用ログ（2026-10-31 JST）

@@ -56,7 +56,7 @@ jobs:
           SCENARIO: ${{ inputs.scenario }}
           GATE_RESULT: ${{ needs.gate.result }}
           SENTINEL_RESULT: ${{ needs.publish-sentinel.result }}
-        run: node scripts/ci/assert-rerun-probe.mjs
+        run: node scripts/ci/assert-rerun-probe.ts
       - name: Preserve probe verification
         if: always()
         uses: actions/upload-artifact@v4

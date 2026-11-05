@@ -34,7 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
-        run: node scripts/ci/report-weekly-ci.mjs verify
+        run: node scripts/ci/report-weekly-ci.ts verify
       - name: Preserve verification without publication credentials
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,7 +71,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CI_RERUN_REPORT_ENABLED: ${{ vars.CI_RERUN_REPORT_ENABLED }}
-        run: node scripts/ci/post-local-report.mjs
+        run: node scripts/ci/post-local-report.ts
       - uses: actions/upload-artifact@v4
         if: always()
         with:

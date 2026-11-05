@@ -151,7 +151,7 @@ The cross-repository validation record collected when introducing the existing S
 
 ## Optional editing examples
 
-Repository examples are opt-in teaching code, not template blocks or additional package exports. See [the JSON/YAML document example](examples/document-properties.mjs) and [its guide (Japanese)](examples/README.ja.md). Each extension owns its actual data contract.
+Repository examples are opt-in teaching code, not template blocks or additional package exports. See [the JSON/YAML document example](examples/document-properties.ts) and [its guide (Japanese)](examples/README.ja.md). Each extension owns its actual data contract.
 
 Prepared source editing is an optional host capability. See [the source/form contract (Japanese)](docs/source-forms.ja.md) for fixed-schema bindings, atomic saves, compatibility, and rollback.
 

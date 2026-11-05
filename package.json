@@ -62,10 +62,10 @@
   },
   "packageManager": "pnpm@11.28.8",
   "scripts": {
-    "check": "node --test test/ci/*.test.mjs && pnpm typecheck && pnpm test",
+    "check": "node --test test/ci/*.test.ts && pnpm typecheck && pnpm test",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --project tsconfig.json && node scripts/copy-react-css.mjs && node scripts/build-webpack4.mjs && node scripts/write-third-party-licenses.mjs && node scripts/write-build-info.mjs",
-    "test": "pnpm build && node --test test/*.test.mjs",
+    "build": "tsc --project tsconfig.json && node scripts/copy-react-css.ts && node scripts/build-webpack4.ts && node scripts/write-third-party-licenses.ts && node scripts/write-build-info.ts",
+    "test": "pnpm build && node --test test/*.test.ts",
     "prepack": "npm run build",
     "prepare": "npm run build"
   },

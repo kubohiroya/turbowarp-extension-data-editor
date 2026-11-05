@@ -49,7 +49,7 @@ jobs:
           CI_WORKFLOW_FILE: ${{ inputs.workflow_file }}
           CI_BRANCH: ${{ inputs.branch }}
           CI_EVENT: ${{ inputs.event }}
-        run: node scripts/ci/require-successful-ci.mjs
+        run: node scripts/ci/require-successful-ci.ts
       - name: Preserve the CI decision
         if: always()
         uses: actions/upload-artifact@v4
