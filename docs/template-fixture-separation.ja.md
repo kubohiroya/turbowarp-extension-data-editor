@@ -1,6 +1,6 @@
 # Template用途依存からの試験分離
 
-owner横断検証は14契約・8packageです。Templateの旧2サンプルは対象外にしました。JSON/YAML編集の任意サンプルはexamples/document-properties.mjs、対応する実serviceの試験はtest/generic-document.test.mjsで所有します。Templateやその公開APIをimportしません。
+owner横断検証は14契約・8packageです。Templateの旧2サンプルは対象外にしました。JSON/YAML編集の任意サンプルはexamples/document-properties.ts、対応する実serviceの試験はtest/generic-document.test.tsで所有します。Templateやその公開APIをimportしません。
 
 例には任意のtext/enabledと追加キーを使用します。required/defaultや業務条件はありません。新たなpackage exportや標準ブロックは追加せず、examplesはnpm配布APIにしません。登録は呼出側が明示的に行います。
 
