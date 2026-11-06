@@ -36,7 +36,7 @@ const uiSchema = {
 
 定義はJSONのみ。関数、React要素、任意コンポーネントの評価は行わない。Schemaの制約、既定値、coercion、未知キーの保存方針は変更しない。現行RJSF v5自体の対応範囲も変わらない。特にRJSFの内部処理が落とすprototype名のプロパティは、このレイアウトでも新たに対応しない。Source/FormのTreeではそのようなリテラルキーも扱える。
 
-完全なサンプルは [`examples/common-layout.mjs`](../examples/common-layout.mjs)。
+完全なサンプルは [`examples/common-layout.ts`](../examples/common-layout.ts)。
 
 ## 入力・検証・アクセシビリティ
 
@@ -88,10 +88,10 @@ v6のLayoutGridField/LayoutHeaderFieldは採用しない。Source/Formは再帰S
 
 ```sh
 node node_modules/typescript/bin/tsc --noEmit
-node --test test/layout.test.mjs test/schema-presentation.test.mjs test/schema-editor.test.mjs test/schema-bundle-editor.test.mjs test/source-view.test.mjs test/source-prepared.test.mjs test/react-dialog.test.mjs test/webpack4.test.mjs
-node test/e2e/layout/browser.mjs
+node --test test/layout.test.ts test/schema-presentation.test.ts test/schema-editor.test.ts test/schema-bundle-editor.test.ts test/source-view.test.ts test/source-prepared.test.ts test/react-dialog.test.ts test/webpack4.test.ts
+node test/e2e/layout/browser.ts
 # Optional: a built Camera Source checkout containing ./editor-metadata.
-node test/e2e/layout/camera-dialog.mjs /path/to/built/camera-source
+node test/e2e/layout/camera-dialog.ts /path/to/built/camera-source
 ```
 
 ブラウザ検証はローカルHTTPとPlaywright Chromiumを使用し、実装された両経路の画面を `test-results/layout/desktop.png`・`mobile.png` に保存する。モックアップではない。ただし、この検証用ページは実TurboWarp GUI・実カメラ・packaged作品のE2Eを代替しない。

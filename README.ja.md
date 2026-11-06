@@ -153,7 +153,7 @@ npm install --save-exact @kubohiroya/turbowarp-extension-data-editor@0.2.2
 
 ## Optional editing examples
 
-Repository examples are opt-in teaching code, not template blocks or additional package exports. See [the JSON/YAML document example](examples/document-properties.mjs) and [its guide](examples/README.ja.md). Each extension owns its actual data contract.
+Repository examples are opt-in teaching code, not template blocks or additional package exports. See [the JSON/YAML document example](examples/document-properties.ts) and [its guide](examples/README.ja.md). Each extension owns its actual data contract.
 
 Prepared source editing is an optional host capability. See [the source/form contract](docs/source-forms.ja.md) for fixed-schema bindings, atomic saves, compatibility, and rollback.
 

@@ -14,8 +14,7 @@
     "declaration": true,
     "rootDir": "src",
     "outDir": "dist",
-    "skipLibCheck": true,
-    "allowJs": true
+    "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/turbowarp/**/*.js"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

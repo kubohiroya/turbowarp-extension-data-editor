@@ -5,7 +5,7 @@ TurboWarp-Plus-Editorの統合ビルド・Pages・配信前後のE2Eは下流の
 
 ゲートはrepo/head repo、workflow ID、event、branch、完全SHAと最新attemptを照合し、失敗・実行中・API確認不能を成功へ変換しません。
 ゲート自身は読み取り専用です。判定を `normal-ci-gate-<run id>-<attempt>` のdecision.jsonとsummaryへ保存します。
-境界のローカル検証は `node --test test/ci/*.test.mjs` です。
+境界のローカル検証は `node --test test/ci/*.test.ts` です。
 
 下流GUIのbranchやPagesの観測は廃止しました。CI再実行の検証は、このリポジトリのfixture・observerの証跡と権限だけで完結します。
 
@@ -18,7 +18,7 @@ gh workflow run ci-gate-rerun-test.yml \
   --repo kubohiroya/turbowarp-extension-data-editor --ref main
 ```
 
-統括・fixture・observerは手動dispatchのみです。実GitHubテストをpush/PRから自動起動しません。通常CIは既存の `node --test test/ci/*.test.mjs` により、統括ロジック・fixture・誤run/attempt・権限境界・timeout等のローカルテストを実行します。変更時の通常CIと、必要時の手動検証で運用します。
+統括・fixture・observerは手動dispatchのみです。実GitHubテストをpush/PRから自動起動しません。通常CIは既存の `node --test test/ci/*.test.ts` により、統括ロジック・fixture・誤run/attempt・権限境界・timeout等のローカルテストを実行します。変更時の通常CIと、必要時の手動検証で運用します。
 
 ### 確認する順序
 

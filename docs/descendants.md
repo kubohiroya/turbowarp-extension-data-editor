@@ -87,9 +87,9 @@ project / target の変更などはホストの `subscribeInvalidation(reference
 
 ## サンプル・検証・連携の残り
 
-業務非依存の [サンプル](../examples/descendant-properties.mjs) は group / item の同じ Schema フォームを複数ノードへ登録し、未登録の中間ノード、孫、複数枝を含む完全な snapshot を作ります。
+業務非依存の [サンプル](../examples/descendant-properties.ts) は group / item の同じ Schema フォームを複数ノードへ登録し、未登録の中間ノード、孫、複数枝を含む完全な snapshot を作ります。
 
-`test/descendants.test.mjs` は構造・下書き・全体検証・競合・無効化・一括 commit 契約を確認します。途中失敗の補償と Undo/Redo はメモリホストでの契約テストです。`test/schema-editor.test.mjs` は実 RJSF 本文の入れ子構成、フィールド ID、unmount 後の孫の検証、1回の変更要求を確認します。
+`test/descendants.test.ts` は構造・下書き・全体検証・競合・無効化・一括 commit 契約を確認します。途中失敗の補償と Undo/Redo はメモリホストでの契約テストです。`test/schema-editor.test.ts` は実 RJSF 本文の入れ子構成、フィールド ID、unmount 後の孫の検証、1回の変更要求を確認します。
 
 実 GUI の子孫探索、階層モーダル、フラグ、実 workspace の一括適用・失敗復元・Undo/Redo、階層編集した `.sb3` の実保存・再読込は scratch-gui #2 の接続後に結合確認が必要です。初版の検証結果を階層編集の実証として扱いません。この追加 API は結合確認前の実験的な契約です。
 

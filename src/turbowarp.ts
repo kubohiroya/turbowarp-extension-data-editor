@@ -1,3 +1,4 @@
+import type {NativeBlock, NativeScratchBlocks} from './turbowarp/native-types.js';
 import createBridge, {openBlockEditorSession as openSession} from './turbowarp/bridge.js';
 import createHost from './turbowarp/host.js';
 import bindIcon from './turbowarp/icon.js';
@@ -82,7 +83,7 @@ export function attachTurboWarpBlockEditors(options: TurboWarpBlockEditorOptions
 
 /** Lower-level host port for custom integrations; standard GUI integrations use attachTurboWarpBlockEditors. */
 export function createTurboWarpBlockEditorHost(options: TurboWarpHostOptions): TurboWarpBlockEditorHost {
-  return createHost(options) as TurboWarpBlockEditorHost;
+  return createHost(options);
 }
 export function bindBlockEditorIcon(options: {
   readonly element: HTMLElement | SVGElement;
@@ -98,10 +99,10 @@ export function bindBlockEditorIcon(options: {
 export function readBlockEditorAppearance(
   block: object | null, ScratchBlocks: object, editableArguments?: readonly string[]
 ): TurboWarpNodeAppearance {
-  return readAppearance(block, ScratchBlocks, editableArguments);
+  return readAppearance(block as NativeBlock | null, ScratchBlocks as NativeScratchBlocks, editableArguments);
 }
 export function createBlockEditorErrorSession(reference: BlockReference, error: unknown): BlockEditorFailureSession {
-  return createErrorSession(reference, error) as BlockEditorFailureSession;
+  return createErrorSession(reference, error);
 }
 export function openBlockEditorSession(options: {
   readonly registry: EditorRegistry;

@@ -25,7 +25,7 @@ jobs:
       - name: Verify latest attempts using isolated fixture and read-only observers
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/ci/test-latest-attempt.mjs
+        run: node scripts/ci/test-latest-attempt.ts
       - name: Preserve rerun test evidence
         if: always()
         uses: actions/upload-artifact@v4
