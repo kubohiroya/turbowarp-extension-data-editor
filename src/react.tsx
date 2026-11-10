@@ -227,6 +227,9 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
       });
       if (!this.stopFieldErrors) this.stopFieldErrors = bindBlockEditorFieldErrors(this.body);
       if (typeof this.props.session.getNodes !== 'function') this.unmountBody = this.props.session.mount!(this.body);
+      // Mounting the body validates what it shows without notifying; read the result, or Save stays enabled
+      // for a form that opened invalid.
+      this.setState(this.props.session.getState());
       // The modal establishes its focus scope after creating the portal.
       this.focusFrame = requestAnimationFrame(() => {
         if (!this.mounted) return;

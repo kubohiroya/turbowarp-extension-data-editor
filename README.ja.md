@@ -109,6 +109,7 @@ pnpm test
 ```
 
 `pnpm test` は型宣言を含むビルド後、コアと標準フォームのテストを実行します。
+`pnpm run test:runtime` は、最小 editor runtime（`@kubohiroya/turbowarp-plus-editor-test-runtime`）の上で、TurboWarp Plus Editor が固定する VM と Scratch Blocks を使い、Editor をビルドせずにエディターを Chromium で試します。試験用の拡張機能が固定入力のエディターを登録し、ブロックのアイコンからダイアログを開いて、検証・保存・本物のドロップダウンの操作を確かめます。先に Playwright の Chromium を入れてください（`pnpm exec playwright install chromium`）。
 パッケージは ESM です。ブラウザには ES2022 の組み込み API が必要です。
 標準フォームの React / ReactDOM peer は 16.14 / 17 / 18。GUI は既存の 16.14 を共有します。
 初回の実験版は `@kubohiroya/turbowarp-extension-data-editor@0.1.0` です。固定SchemaのSource/Form編集は `0.2.0`、既定OFFの固定入力契約・標準field transaction・固定フォームとGUI接続は `0.2.1` で追加しました。配布版 `0.2.2` は、編集見出しのブロック名・アイコン、項目の削除メニュー・追加ボタン、key-valueの2行表示を含みます。

@@ -22,3 +22,5 @@ jobs:
       - run: pnpm test
       - run: pnpm exec playwright install --with-deps chromium
       - run: node --test test/e2e/layout/dialog-window.ts
+      # Integration with the TurboWarp Plus Editor's pinned VM and Scratch Blocks, on the minimal editor runtime.
+      - run: pnpm run test:runtime
