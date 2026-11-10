@@ -8,8 +8,15 @@ import {attachTurboWarpBlockEditors} from '../../dist/turbowarp.js';
 import styles from '../../dist/react.css';
 import * as fixed from './fixed-fixture.ts';
 import * as preview from './preview-fixture.ts';
+import * as theme from './theme-fixture.ts';
 
-const fixtures = {fixed, preview};
+// The theme fixture is two extensions; each kind registers what its project uses.
+const fixtures = {
+    fixed: {register: fixed.register, projectJSON: fixed.projectJSON},
+    preview: {register: preview.register, projectJSON: preview.projectJSON},
+    theme: {register: (Scratch: any) => theme.definitions.forEach(definition => theme.register(Scratch, definition)),
+        projectJSON: theme.projectJSON}
+};
 
 declare const EditorRuntime: any;
 const messages = {title: 'Edit block', saving: 'Saving…', cancel: 'Cancel', save: 'Save', saveAll: 'Save all',
