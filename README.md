@@ -107,6 +107,7 @@ pnpm test
 ```
 
 `pnpm test` builds the package, including type declarations, then runs the core and standard form tests.
+`pnpm run test:runtime` runs the editors on the TurboWarp Plus Editor's pinned VM and Scratch Blocks in Chromium, through the minimal editor runtime (`@kubohiroya/turbowarp-plus-editor-test-runtime`), without building the Editor: a fixture extension registers a fixed input editor, and the tests open its dialog from the block's icon, validate, save and use the native dropdown. Install Chromium for Playwright first (`pnpm exec playwright install chromium`).
 The package uses ESM. Browsers need ES2022 built-in APIs.
 The standard form supports React / ReactDOM peers 16.14, 17, and 18. The GUI shares its existing React 16.14 installation.
 The first experimental release was `@kubohiroya/turbowarp-extension-data-editor@0.1.0`. Fixed-schema Source/Form editing was added in `0.2.0`; default-off fixed-input contracts, standard field transactions, fixed-input forms, and GUI integration followed in `0.2.1`. Release `0.2.2` includes block names and icons in editor headings, field removal menus and add buttons, and two-line key-value layouts.
