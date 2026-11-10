@@ -22,9 +22,11 @@ export const formStyles = `
 [data-editor-form] .editor-form-section>legend,[data-editor-form] .rjsf fieldset>legend{font-size:15px;font-weight:650;padding:0;margin:0 0 10px;color:inherit}
 [data-editor-form] .editor-form-field,[data-editor-form] .rjsf .form-group{margin:0 0 14px;min-width:0}
 [data-editor-form] .editor-form-field>label,[data-editor-form] .rjsf .control-label{display:block;font-size:13px;font-weight:600;margin:0 0 6px;color:inherit}
+[data-editor-form] [data-block-editor-pair-row] label,[data-editor-form] .rjsf [data-block-editor-pair-row] .control-label{margin-bottom:0}
 [data-editor-form] .required{color:var(--editor-accent);margin-left:3px}
 [data-editor-form] input:not([type=checkbox]):not([type=radio]),[data-editor-form] select,[data-editor-form] textarea{display:block;width:100%;min-height:38px;margin:0;padding:8px 11px;border:1px solid var(--editor-line);border-radius:7px;background:var(--block-editor-input,white);color:inherit;font:inherit;box-shadow:0 1px 2px #172b4d05}
 [data-editor-form] textarea{min-height:76px;resize:vertical}
+[data-editor-form] input:not([type=checkbox]):not([type=radio])[data-block-editor-invalid="true"],[data-editor-form] select[data-block-editor-invalid="true"],[data-editor-form] textarea[data-block-editor-invalid="true"]{border-color:var(--block-editor-error-border,#c62828);box-shadow:0 0 0 1px var(--block-editor-error-border,#c62828);background:linear-gradient(var(--block-editor-error-tint,rgba(198,40,40,0.08)),var(--block-editor-error-tint,rgba(198,40,40,0.08))),var(--block-editor-input,white)}
 [data-editor-form] input:focus-visible,[data-editor-form] select:focus-visible,[data-editor-form] textarea:focus-visible,[data-editor-form] button:focus-visible,[data-editor-form] summary:focus-visible{outline:2px solid var(--editor-accent);outline-offset:2px}
 [data-editor-form] input[readonly]{background:var(--block-editor-subtle,var(--block-editor-background,#f5f7fb));color:var(--editor-muted)}
 [data-editor-form] input[type=checkbox]{width:17px;height:17px;margin:0;accent-color:var(--editor-accent)}
