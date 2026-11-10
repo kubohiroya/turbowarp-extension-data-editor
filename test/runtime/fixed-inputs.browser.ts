@@ -15,7 +15,7 @@ const dialog = (page: Page) => page.getByRole('dialog').filter({has: page.locato
 const raw = (page: Page) => page.evaluate(() => (globalThis as any).raw());
 
 async function load(t: any) {
-    const server = await serveEditorRuntime({script: fileURLToPath(new URL('./fixed-page.ts', import.meta.url))});
+    const server = await serveEditorRuntime({script: fileURLToPath(new URL('./page.ts', import.meta.url))});
     const browser = await chromium.launch();
     t.after(async () => { await browser.close(); await server.close(); });
     const page = await browser.newPage({viewport: {width: 1280, height: 900}});
@@ -23,7 +23,7 @@ async function load(t: any) {
     page.on('pageerror', error => errors.push(error.message));
     t.after(() => assert.deepEqual(errors, []));
     await page.goto(server.url);
-    await page.evaluate(() => (globalThis as any).setup());
+    await page.evaluate(() => (globalThis as any).setup('fixed'));
     await expect(page.locator('.blocklyBlockCanvas [data-id="fixed-root"]')).toHaveCount(1);
     assert.equal(await page.evaluate(() => (globalThis as any).__fixedFixtureAvailable), true);
     return page;

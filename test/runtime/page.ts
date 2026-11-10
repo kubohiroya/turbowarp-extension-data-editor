@@ -6,7 +6,10 @@ import {createBlockEditorService} from '../../dist/rjsf.js';
 import {BlockEditorDialog} from '../../dist/react.js';
 import {attachTurboWarpBlockEditors} from '../../dist/turbowarp.js';
 import styles from '../../dist/react.css';
-import {register, projectJSON} from './fixed-fixture.ts';
+import * as fixed from './fixed-fixture.ts';
+import * as preview from './preview-fixture.ts';
+
+const fixtures = {fixed, preview};
 
 declare const EditorRuntime: any;
 const messages = {title: 'Edit block', saving: 'Saving…', cancel: 'Cancel', save: 'Save', saveAll: 'Save all',
@@ -25,7 +28,26 @@ const Modal = ({id, className, contentLabel, onRequestClose, children}: any) => 
         style: {background: 'white'},
         onKeyDown: (event: KeyboardEvent) => { if (event.key === 'Escape') onRequestClose(); }}, children));
 
-(globalThis as any).setup = async () => {
+// A preview VM is a second VM. Constructing one re-registers the VM's dispatch services, so the
+// Editor's GUI takes them out for the constructor and puts them back; this does the same.
+const createPreviewVm = () => {
+    const {dispatch} = EditorRuntime.vmModules;
+    const keys = ['runtime', 'extensions'];
+    const previous = keys.map(key => Object.getOwnPropertyDescriptor(dispatch.services, key));
+    for (const key of keys) delete dispatch.services[key];
+    try {
+        const vm = new EditorRuntime.VirtualMachine();
+        vm.extensionManager.loadExtensionURL = () => Promise.reject(new Error('Preview VMs cannot load extensions.'));
+        return vm;
+    } finally {
+        keys.forEach((key, index) => {
+            if (previous[index]) Object.defineProperty(dispatch.services, key, previous[index]);
+            else delete dispatch.services[key];
+        });
+    }
+};
+
+(globalThis as any).setup = async (kind: keyof typeof fixtures = 'fixed') => {
     const host = await EditorRuntime.start(document.getElementById('workspace'), {locale: 'en'});
     const style = document.createElement('style');
     // What css-loader does for this module: `:global(...)` names stay as written, local names stay kebab-case.
@@ -33,9 +55,9 @@ const Modal = ({id, className, contentLabel, onRequestClose, children}: any) => 
     document.head.append(style);
     const service = createBlockEditorService({commonLayout: true, fixedInputs: true});
     const {ScratchCommon} = EditorRuntime.vmModules;
-    register({...ScratchCommon, gui: {blockEditors: service.api},
+    fixtures[kind].register({...ScratchCommon, gui: {blockEditors: service.api, createPreviewVm},
         extensions: {unsandboxed: true, register: (extension: any) => host.registerExtension(extension)}});
-    await host.loadProject(projectJSON());
+    await host.loadProject(fixtures[kind].projectJSON());
     const root = document.createElement('div');
     document.body.append(root);
     let open = false;
