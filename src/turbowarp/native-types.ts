@@ -105,7 +105,11 @@ export interface NativeTarget {
 }
 export interface NativeVM {
     editingTarget: NativeTarget | null;
-    runtime: {emitProjectChanged(): void};
+    runtime: {
+        emitProjectChanged(): void;
+        /** Loaded extensions as TurboWarp keeps them; read only for the blocks' default values. */
+        _blockInfo?: readonly unknown[];
+    };
     on(name: string, listener: () => void): void;
     removeListener(name: string, listener: () => void): void;
 }

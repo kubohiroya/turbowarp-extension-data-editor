@@ -1,7 +1,7 @@
 import {snapshotJson} from './schema-json.js';
 import {captureFixedBranchRules} from './fixed-input-branches.js';
 import type {FixedBlockSnapshot, FixedInputDeclaration, FixedInputDependency, FixedInputMetadata} from './fixed-input-types.js';
-import type {ArgumentSlot, BlockReference} from './types.js';
+import type {ArgumentSlot, BlockReference, LiteralValue} from './types.js';
 
 function fail(): never {throw new TypeError('Invalid fixed-input contract or snapshot.');}
 
@@ -138,6 +138,17 @@ export function captureFixedSnapshot(
   }
   if (readOnlyArguments.some(name => !Object.hasOwn(inputs, name))) return fail();
   const capturedDependencies = dependencies(context.dependencies, editable);
+  let defaults: Record<string, LiteralValue> | undefined;
+  if (context.defaults !== undefined) {
+    const capturedDefaults = record(context.defaults);
+    defaults = Object.create(null) as Record<string, LiteralValue>;
+    for (const name of Object.keys(capturedDefaults)) {
+      const raw = capturedDefaults[name];
+      if (typeof raw !== 'string' && typeof raw !== 'number' && typeof raw !== 'boolean') return fail();
+      defaults[name] = raw;
+    }
+    Object.freeze(defaults);
+  }
   if (declaration) {
     const expected = captureFixedInputDeclaration(declaration);
     if (contractId !== expected.contractId || contractRevision !== expected.contractRevision ||
@@ -146,7 +157,7 @@ export function captureFixedSnapshot(
   }
   return Object.freeze({targetId, blockId, opcode, revision, arguments: Object.freeze(argumentsCopy),
     fixedContext: Object.freeze({contractId, contractRevision, generation, readOnlyArguments,
-      dependencies: capturedDependencies, inputs: Object.freeze(inputs)})});
+      dependencies: capturedDependencies, inputs: Object.freeze(inputs), ...(defaults ? {defaults} : {})})});
 }
 
 export function sameFixedSnapshot(left: FixedBlockSnapshot, right: FixedBlockSnapshot): boolean {

@@ -67,3 +67,25 @@ test('dialog uses the root label in a hierarchy and retains the generic title wi
     await act(async () => { ReactDOM.unmountComponentAtNode(container); });
   }
 });
+
+test('the save button reads Update once the block differs from its defaults, with the reason it is disabled', async t => {
+  const labels = {...messages, update: '更新', noChanges: '変更はありません', fixToSave: '{count}件の問題を直すと保存できます'};
+  const cases = [
+    [{saveMode: 'save', unchanged: true, canSave: true, issues: []}, '保存', null],
+    [{saveMode: 'update', unchanged: true, canSave: false, issues: []}, '更新', '変更はありません'],
+    [{saveMode: 'update', unchanged: false, canSave: false, issues: [{message: 'a'}, {message: 'b'}]}, '更新', '2件の問題を直すと保存できます'],
+    [{canSave: true, issues: []}, '保存', null]
+  ];
+  for (const [state, label, reason] of cases) {
+    const session = {reference: {blockId: 'root'}, getState: () => ({status: 'editing', error: null, ...state}),
+      subscribe: () => () => {}, mount: () => () => {}, dispose: () => true};
+    const container = document.createElement('div');
+    t.after(() => container.remove());
+    const Modal = props => React.createElement('div', null, props.children);
+    await act(async () => { ReactDOM.render(React.createElement(BlockEditorDialog, {
+      session, ModalComponent: Modal, messages: labels, styles: {}, onClose: () => {}}), container); });
+    assert.equal(container.querySelector('[data-block-editor-save]').textContent, label);
+    assert.equal(container.querySelector('[data-block-editor-save-reason]')?.textContent ?? null, reason);
+    await act(async () => { ReactDOM.unmountComponentAtNode(container); });
+  }
+});

@@ -15,6 +15,8 @@ export interface DialogSessionState {
   readonly canSave: boolean;
   readonly issues: readonly Issue[];
   readonly error: unknown;
+  readonly saveMode?: 'save' | 'update';
+  readonly unchanged?: boolean;
 }
 export interface DialogSession {
   readonly reference?: {readonly blockId: string};
@@ -42,6 +44,12 @@ export interface EditorDialogMessages {
   readonly invalidInput?: string;
   readonly maximize?: string;
   readonly restore?: string;
+  /** The save button when the block already differs from its defaults. Falls back to `save`. */
+  readonly update?: string;
+  /** Shown next to a disabled Update when nothing changed. */
+  readonly noChanges?: string;
+  /** Shown next to a disabled save button; `{count}` is the number of problems. */
+  readonly fixToSave?: string;
 }
 export interface EditorNodeAppearance {
   readonly name?: string;
@@ -260,6 +268,9 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
     if (session.getFixedInputView && (this.state.status === 'editing' || saving)) {
       try {fixed = Boolean(session.getFixedInputView());} catch {fixed = true;}
     }
+    const reason = this.state.status !== 'editing' || this.state.canSave ? undefined :
+      this.state.issues.length && messages.fixToSave ? messages.fixToSave.replace('{count}', () => String(this.state.issues.length)) :
+      this.state.saveMode === 'update' && this.state.unchanged ? messages.noChanges : undefined;
     const root = session.getNodes?.().find(node => node.inputPath.length === 0);
     const rootId = session.reference?.blockId || root?.reference.blockId;
     const appearance = rootId ? this.props.nodeAppearances?.[rootId] : undefined;
@@ -294,10 +305,12 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
           </div>
         </div>
         <div className={styles.buttons}>
+          {reason ? <span data-block-editor-save-reason="">{reason}</span> : null}
           <button disabled={saving} type="button" onClick={this.handleClose}>{messages.cancel}</button>
-          <button data-block-editor-save="" disabled={!this.state.canSave || this.state.mountFailed}
-            type="button" onClick={this.handleSave}>
-            {saving ? messages.saving : hierarchy ? messages.saveAll : messages.save}
+          <button data-block-editor-save="" data-block-editor-save-mode={this.state.saveMode}
+            disabled={!this.state.canSave || this.state.mountFailed} type="button" onClick={this.handleSave}>
+            {saving ? messages.saving : hierarchy ? messages.saveAll :
+              this.state.saveMode === 'update' ? messages.update || messages.save : messages.save}
           </button>
         </div>
       </div>

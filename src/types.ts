@@ -59,6 +59,13 @@ export interface SessionState {
   readonly canSave: boolean;
   readonly issues: readonly ValidationIssue[];
   readonly error: unknown;
+  /**
+   * Fixed input editors whose host reports the inputs' defaults: `save` while every input still
+   * holds its default, `update` otherwise. Absent when the host cannot tell.
+   */
+  readonly saveMode?: 'save' | 'update';
+  /** True when saving would write nothing. With `update`, Save is disabled until something changes. */
+  readonly unchanged?: boolean;
 }
 
 export interface EditorViewContext {
