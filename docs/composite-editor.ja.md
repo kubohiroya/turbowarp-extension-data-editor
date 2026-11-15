@@ -27,14 +27,44 @@ interface CompositeEditorOptions<C = null> {
   opcodes: readonly string[];
   /** 画面に並べる順。 */
   sections: readonly CompositeSection<C>[];
-  /** 入力をまたぐ検査。全sectionが個別に通ったあとで1回だけ呼ぶ。 */
-  validateAll?(values: Readonly<Record<string, JsonValue>>, context: SchemaValidationContext<C>): readonly ValidationIssue[];
+  /**
+   * 入力をまたぐ検査。全sectionが個別に通ったあとで1回だけ呼ぶ。
+   * snapshotで、段にしていない入力（例：DESCRIPTION）の値も読める。
+   */
+  validateAll?(
+    values: Readonly<Record<string, CompositeValue>>,
+    snapshot: FixedBlockSnapshot,
+    context: SchemaValidationContext<C>
+  ): readonly ValidationIssue[];
   validationContext: () => SchemaValidationContext<C>;
 }
 
 type CompositeSection<C> =
   | {kind: 'fixed'; binding: FixedInputBinding<C>}
-  | {kind: 'source'; binding: SourceBinding<C>; modes?: SourceModes};
+  | {kind: 'source'; binding: SourceBinding<C>; modes?: SourceModes<C>};
+
+/** 段の最終的な値。名前のモードの値はソースとして解釈しない。 */
+type CompositeValue =
+  | {mode: 'fixed'; value: JsonValue}
+  | {mode: 'name'; name: string}
+  | {mode: 'source'; value: JsonValue};
+
+interface SourceModes<C = null> {
+  /** 「名前で指定」。ダイアログを開くたびに呼ぶ（プロジェクトの編集で一覧が変わるため）。 */
+  names?: {
+    list(snapshot: FixedBlockSnapshot): readonly {name: string; label?: string}[];
+    /** 保存時の検査。名前が解決できなければ問題を返す。 */
+    validate(name: string, context: SchemaValidationContext<C>): readonly ValidationIssue[];
+    /** 保存済みの文字列が名前か（JSONでないか）を判定する。 */
+    isName(literal: string): boolean;
+  };
+  /** 「ベーシック」。無ければベーシックのタブを出さない。 */
+  basic?: {
+    schemaBundle: SchemaBundle;
+    /** 値をベーシックのフォームで欠けなく表せるか。 */
+    fits(value: JsonValue): boolean;
+  };
+}
 ```
 
 - 既存の`register*`は変えない。`registerCompositeEditor`はホスト提供APIでは任意のcapabilityとする。
@@ -53,12 +83,13 @@ type CompositeSection<C> =
 
 | モード | 内容 |
 |---|---|
-| 名前で指定 | ownerが渡す名前の一覧から選ぶ（例：`define schema`の定義名）。一覧が無いsectionでは出さない |
-| ベーシック | ownerが渡す「ベーシック用スキーマ」からRJSFでフォームを作る |
+| 名前で指定 | `modes.names.list`が返す一覧から選ぶ（例：`define schema`の定義名）。`names`が無いsectionでは出さない |
+| ベーシック | `modes.basic.schemaBundle`からRJSFでフォームを作る。`basic`が無いsectionでは出さない |
 | エキスパート | JSONをテキストエリアで直接書く。既存のSource表示を使う |
 
 - **ベーシック用スキーマ**：JSON SchemaのメタスキーマそのものはRJSFでは扱えない（再帰、`$dynamicRef`、真偽値スキーマ、配列の`type`）。そこで、ownerが表せる範囲を絞ったスキーマを渡す。JSON Schemaを書く入力では、プロパティの一覧（名前、型、必須、説明）、`enum`、最小・最大、配列の要素の型を範囲とする。`turbowarp-named-functions`の`define schema`ブロックが扱う範囲と揃える。
-- **ベーシックで表せるかの判定**：ownerが`fitsBasic(value): boolean`を渡す。
+- **ベーシックで表せるかの判定**：`modes.basic.fits(value)`で行う。
+- **名前の値はソースとして解釈しない**：既存の`SourceBinding`はソースをJSONかYAMLとして解釈する前提で、スキーマの名前（`Scored@1.0.0`）はどちらでもない。そこで、保存済みの文字列が`modes.names.isName`で名前と判定されたら、`decode`と`validateSource`を通さず、名前のモードの値（`{mode: 'name'}`）として扱う。保存時の検査は`modes.names.validate`で行い、書き込む文字列は名前そのものとする。
 - **最初に開くモード**：名前が入っていれば「名前で指定」、ベーシックで表せればベーシック、それ以外はエキスパート。
 - **ベーシック→エキスパート**：いつでも切り替えられる。
 - **エキスパート→ベーシック**：JSONの文法が壊れているときは切り替えられない。ベーシックで表せない機能を含むときは、フォームを読み取り専用で表示し、「ベーシックモードでは表せない内容が含まれています」と知らせる。フォームから保存して機能が黙って消えることを防ぐ。
@@ -77,7 +108,7 @@ type CompositeSection<C> =
 - `EXPORT`：固定入力の段（既存のbindingをそのまま移す）
 - `SCHEMA`：JSONの段。3つのモードすべてを使う
 - `RETURNS`：JSONの段。空を許す
-- `validateAll`：`EXPORT`が`tool`なら`DESCRIPTION`が必須、という既存の規則（`function-registry.ts`の`readDefinition`）
+- `validateAll`：`EXPORT`が`tool`なら`DESCRIPTION`が必須、という既存の規則（`function-registry.ts`の`readDefinition`）。`DESCRIPTION`は段にしないので、`snapshot`から読む
 
 ## 未決事項
 
