@@ -2,6 +2,7 @@ import {compileSchemaBundle} from './schema-engine.js';
 import {isJsonRecord, snapshotJson} from './schema-json.js';
 import {isLiteral} from './data.js';
 import {parseFixedNumberInput} from './fixed-input-schema.js';
+import {fitsBasicJsonSchema} from './json-schema-authoring.js';
 import {captureFixedInputDeclaration, captureFixedSnapshot} from './fixed-input-snapshot.js';
 import {resolveFixedBranches, validateFixedBranchChanges} from './fixed-input-branches.js';
 import type {FixedBlockSnapshot, FixedInputBranchRule, FixedInputControl, FixedInputDeclaration, FixedInputEditorDefinition,
@@ -19,6 +20,11 @@ export interface FixedInputBinding<C = null> {
   encode(value: JsonValue, context: SchemaValidationContext<C>): LiteralValue;
   /** Check the exact candidate. Messages from this callback are never rendered verbatim. */
   validateCandidate(candidate: LiteralValue, context: SchemaValidationContext<C>, snapshot: FixedBlockSnapshot): readonly ValidationIssue[];
+  /**
+   * For a `json` control: the names a user may pick (for example defined schema names). Called once
+   * per block revision while the dialog is open; the list is copied, never kept live.
+   */
+  listNames?(snapshot: FixedBlockSnapshot): readonly string[];
 }
 export interface FixedInputBranchPolicy<C = null> extends Omit<FixedInputBranchRule, 'cases'> {
   readonly cases: readonly (FixedInputBranchRule['cases'][number] & {readonly bindings?: readonly FixedInputBinding<C>[]})[];
@@ -181,7 +187,8 @@ export function createFixedInputEditor<C = null>(options: FixedInputEditorOption
   if (apiVersion !== 1 || !inputBindings.length || typeof contextProvider !== 'function') throw new TypeError('Invalid fixed editor options.');
   const provider = contextProvider as FixedInputEditorOptions<C>['validationContext'];
   type Binding = {argument: string; read: FixedInputBinding<C>['read']; encode: FixedInputBinding<C>['encode'];
-    validateCandidate: FixedInputBinding<C>['validateCandidate']; validator: CompiledSchema; schemaBundle: SchemaBundle; control?: FixedInputControl};
+    validateCandidate: FixedInputBinding<C>['validateCandidate']; validator: CompiledSchema; schemaBundle: SchemaBundle; control?: FixedInputControl;
+    listNames?: NonNullable<FixedInputBinding<C>['listNames']>};
   const compileBinding = (binding: unknown): Binding => {
     plainDeclaration(binding);
     const argument = declarationText(ownData(binding, 'argument'));
@@ -190,22 +197,42 @@ export function createFixedInputEditor<C = null>(options: FixedInputEditorOption
     const validateCandidate = ownData(binding, 'validateCandidate');
     const schemaBundle = declarationJson(ownData(binding, 'schemaBundle')) as unknown as SchemaBundle;
     const inputControl = ownData(binding, 'control', true);
+    const listNames = ownData(binding, 'listNames', true);
     let control: FixedInputControl | undefined;
     if (inputControl !== undefined) {
       const item = declarationJson(inputControl);
-      if (!isJsonRecord(item) || !['text', 'number', 'enum', 'color'].includes(item.kind as string) ||
+      if (!isJsonRecord(item) || !['text', 'number', 'enum', 'color', 'json'].includes(item.kind as string) ||
+          (item.basic !== undefined && (item.kind !== 'json' || item.basic !== 'json-schema')) ||
           (item.label !== undefined && typeof item.label !== 'string') ||
           (item.choices !== undefined && (!Array.isArray(item.choices) || item.choices.some(choice =>
             !isJsonRecord(choice) || !Object.hasOwn(choice, 'value') || (choice.label !== undefined && typeof choice.label !== 'string'))))) return fixedDeclarationError();
       freeze(item);control = item as unknown as FixedInputControl;
     }
-    if (typeof read !== 'function' || typeof encode !== 'function' || typeof validateCandidate !== 'function') throw new TypeError('Invalid fixed binding callbacks.');
+    if (typeof read !== 'function' || typeof encode !== 'function' || typeof validateCandidate !== 'function' ||
+        (listNames !== undefined && (typeof listNames !== 'function' || control?.kind !== 'json'))) throw new TypeError('Invalid fixed binding callbacks.');
     const result = compileSchemaBundle(schemaBundle);
     if (result.kind !== 'compiled') throw new TypeError('Invalid fixed input schema.');
     freeze(schemaBundle);
     return Object.freeze({argument, read: read as FixedInputBinding<C>['read'], encode: encode as FixedInputBinding<C>['encode'],
       validateCandidate: validateCandidate as FixedInputBinding<C>['validateCandidate'], validator: result.validator, schemaBundle,
-      ...(control === undefined ? {} : {control})});
+      ...(control === undefined ? {} : {control}),
+      ...(listNames === undefined ? {} : {listNames: listNames as NonNullable<FixedInputBinding<C>['listNames']>})});
+  };
+  // Owner names are read once per block revision, not on every render.
+  const nameCache = new Map<string, readonly string[] | undefined>();
+  const namesFor = (binding: Binding, snapshot: FixedBlockSnapshot): readonly string[] | undefined => {
+    if (!binding.listNames) return undefined;
+    const key = JSON.stringify([snapshot.revision, binding.argument]);
+    if (!nameCache.has(key)) {
+      if (nameCache.size > 32) nameCache.clear();
+      let names: readonly string[] | undefined;
+      try {
+        const value = copySync(binding.listNames(snapshot));
+        names = Array.isArray(value) && value.every(name => typeof name === 'string') ? Object.freeze([...new Set(value as string[])]) : undefined;
+      } catch {names = undefined;}
+      nameCache.set(key, names);
+    }
+    return nameCache.get(key);
   };
   const bindings = inputBindings.map(compileBinding);
   const policyBindings: (readonly (readonly Binding[])[])[] = [];
@@ -299,7 +326,13 @@ export function createFixedInputEditor<C = null>(options: FixedInputEditorOption
     if (!Object.hasOwn(entry, 'value') || typeof entry.changed !== 'boolean' || entry.readOnly === true) throw new TypeError();
     let value = copySync(entry.value) as JsonValue;
     let token: string | undefined;
-    if (Object.hasOwn(entry, 'buffer')) {
+    if (Object.hasOwn(entry, 'buffer') && _binding.control?.kind === 'json') {
+      // The expert text must parse to exactly the value it claims; unparsable text is not saved.
+      if (!entry.changed || typeof entry.buffer !== 'string') throw new TypeError();
+      let parsed: JsonValue;
+      try {parsed = copySync(JSON.parse(entry.buffer)) as JsonValue;} catch {throw new TypeError();}
+      if (!sameProjection(parsed, value)) throw new TypeError();
+    } else if (Object.hasOwn(entry, 'buffer')) {
       if (!entry.changed || typeof entry.buffer !== 'string') throw new TypeError();
       const parsed = parseFixedNumberInput(entry.buffer);
       if (parsed.kind !== 'valid' || typeof value !== 'number' || !Object.is(parsed.value, value)) throw new TypeError();
@@ -318,6 +351,12 @@ export function createFixedInputEditor<C = null>(options: FixedInputEditorOption
       if (!isJsonRecord(issue) || typeof issue.message !== 'string' || (issue.path !== undefined && typeof issue.path !== 'string')) throw new TypeError();
     }
     return owner.length ? diagnostic('owner-input-invalid', binding.argument) : undefined;
+  };
+  const jsonPresentation = (binding: Binding, snapshot: FixedBlockSnapshot, value: JsonValue | undefined) => {
+    const names = namesFor(binding, snapshot);
+    const basic = binding.control?.basic;
+    return {...(names === undefined ? {} : {names}),
+      ...(basic === undefined ? {} : {basic, basicFits: value !== undefined && fitsBasicJsonSchema(value)})};
   };
   const description = (draft: JsonObject, snapshot: FixedBlockSnapshot): FixedInputViewDescription => {
     const current = selection(snapshot, draft);
@@ -347,7 +386,8 @@ export function createFixedInputEditor<C = null>(options: FixedInputEditorOption
         ...(rawDisplay === undefined ? {} : {rawDisplay}),
         ...(explicit?.label === undefined ? {} : {label: explicit.label}), ...(choices === undefined ? {} : {choices}),
         ...(explicit && Object.hasOwn(explicit, 'reset') ? {reset: explicit.reset!} : {}),
-        ...(reason === undefined ? {} : {reason}), ...(metadata?.source === 'reporter' ? {unverified: true as const} : {})});
+        ...(reason === undefined ? {} : {reason}), ...(metadata?.source === 'reporter' ? {unverified: true as const} : {}),
+        ...(control === 'json' && binding ? jsonPresentation(binding, snapshot, value) : {})});
       if (!binding || state !== 'editable' || !entry) return;
       try {
         const parsed = parseEntry(binding, entry, initialProjection(argument, snapshot));
