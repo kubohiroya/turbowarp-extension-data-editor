@@ -23,7 +23,14 @@ export interface FixedInputBranchRule {
   readonly cases: readonly FixedInputBranchCase[];
 }
 export interface FixedInputControl {
-  readonly kind: 'text' | 'number' | 'enum' | 'color';
+  /**
+   * `json` edits a JSON value in a collapsible section. A string value is a name chosen from
+   * the binding's `listNames`; any other value is JSON data, edited as text ("expert") or, with
+   * `basic: 'json-schema'`, as a form for a simple JSON Schema ("basic").
+   */
+  readonly kind: 'text' | 'number' | 'enum' | 'color' | 'json';
+  /** For `json`: offer the basic form for writing a JSON Schema. */
+  readonly basic?: 'json-schema';
   readonly label?: string;
   readonly choices?: readonly {readonly value: JsonValue; readonly label?: string}[];
   readonly reset?: JsonValue;
@@ -38,6 +45,11 @@ export interface FixedInputViewInput {
   readonly reason?: string;
   readonly rawDisplay?: string;
   readonly unverified?: true;
+  /** For `json`: the names the owner offers now. Absent when the owner lists none. */
+  readonly names?: readonly string[];
+  /** For `json`: the basic form on offer, and whether the current value fits it without loss. */
+  readonly basic?: 'json-schema';
+  readonly basicFits?: boolean;
 }
 export interface FixedInputBranchState {
   readonly selector: string;

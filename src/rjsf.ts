@@ -7,7 +7,8 @@ import {LayoutHost} from './layout-view.js';
 import {createSourceEditor} from './source-editor.js';
 import {createFixedInputEditor} from './fixed-input-editor.js';
 import {captureFixedInputMessages, resolveFixedInputMessages, mountFixedInputView} from './fixed-input-view.js';
-import type {FixedInputMessageSource} from './fixed-input-view.js';
+import type {FixedInputMessageSource, FixedJsonFormRenderer} from './fixed-input-view.js';
+import {basicJsonSchemaAuthoringSchema} from './json-schema-authoring.js';
 export type {FixedInputViewMessages, FixedInputMessageSource} from './fixed-input-view.js';
 import type {FixedInputEditorOptions} from './fixed-input-editor.js';
 export {createFixedInputEditor} from './fixed-input-editor.js';
@@ -58,6 +59,23 @@ const ArrayTitle = compactArrayTitleTemplate(defaultTemplates.ArrayFieldTitleTem
 const ArrayBody = compactArrayTemplate(defaultTemplates.ArrayFieldTemplate);
 const Checkbox = compactCheckboxWidget(moduleExports(RjsfCore).getDefaultRegistry().widgets.CheckboxWidget!);
 let nextViewId = 0;
+
+/** The basic form of a fixed `json` control: a simple JSON Schema written through a form. */
+let basicSchemaValidator: ReturnType<typeof customizeValidator> | undefined;
+const renderBasicJsonSchemaForm: FixedJsonFormRenderer = ({label, data, disabled, onChange}) => {
+  basicSchemaValidator ??= customizeValidator<unknown>({AjvClass: Ajv2020,
+    ajvOptionsOverrides: {allErrors: true, coerceTypes: false, useDefaults: false, removeAdditional: false}});
+  return React.createElement(Form, {
+    schema: cloneJson(basicJsonSchemaAuthoringSchema as JsonObject) as RJSFSchema,
+    validator: basicSchemaValidator,
+    formData: cloneJson(data),
+    idPrefix: `block-editor-json-${label.replace(/[^A-Za-z0-9_-]/g, '_')}`,
+    experimental_defaultFormStateBehavior: {emptyObjectFields: 'skipDefaults' as const,
+      arrayMinItems: {populate: 'never' as const}, constAsDefaults: 'never' as const},
+    tagName: 'div' as const, liveValidate: true, showErrorList: false as const, disabled,
+    onChange: (event: IChangeEvent<unknown>) => {if (!disabled) onChange(cloneJson(event.formData as JsonValue));}
+  } as FormProps<unknown>, React.createElement('span', {hidden: true}));
+};
 
 export interface SchemaEditorOptions {
   readonly apiVersion: typeof EDITOR_API_VERSION;
@@ -156,7 +174,7 @@ export function createBlockEditorService(options?: EditorFeatureFlags & {readonl
   const fixed = options?.fixedInputs === true ? {
     registerFixedInputEditor: <C,>(definition: FixedInputEditorOptions<C>) => {
       const fixedDefinition = createFixedInputEditor(definition);
-      const remove = registry.registerFixed({...fixedDefinition, mount: (container, context) => mountFixedInputView(container, context, resolveFixedInputMessages(fixedMessages))});
+      const remove = registry.registerFixed({...fixedDefinition, mount: (container, context) => mountFixedInputView(container, context, resolveFixedInputMessages(fixedMessages), renderBasicJsonSchemaForm)});
       notify();
       let active = true;
       return () => {if (active) {active = false;remove();notify();}};

@@ -12,14 +12,34 @@ export interface FixedInputViewMessages {
   readonly colorPicker: string;
   readonly invalidValue: string;
   readonly inactiveDraft: string;
+  readonly ready: string;
+  readonly needsAttention: string;
+  readonly modeName: string;
+  readonly modeBasic: string;
+  readonly modeExpert: string;
+  readonly basicUnfit: string;
+  readonly startBasic: string;
+  readonly invalidJson: string;
+  readonly noNames: string;
 }
+
+/** Renders the basic form of a `json` control. Supplied by the entry that bundles the form library. */
+export type FixedJsonFormRenderer = (props: {
+  readonly label: string;
+  readonly data: JsonValue;
+  readonly disabled: boolean;
+  readonly onChange: (data: JsonValue) => void;
+}) => React.ReactElement;
 export type FixedInputMessageSource = Partial<FixedInputViewMessages> | (() => Partial<FixedInputViewMessages>);
 
 const defaultMessages: FixedInputViewMessages = Object.freeze({
   reset: 'Reset', readOnly: 'This input cannot be edited safely.',
   unverified: 'The expression is retained without evaluation. Its runtime validity has not been checked.',
   currentValue: 'Current value', colorPicker: 'color picker', invalidValue: 'Check this value before saving.',
-  inactiveDraft: 'Hidden edits are retained in this dialog and will not be saved while hidden.'
+  inactiveDraft: 'Hidden edits are retained in this dialog and will not be saved while hidden.',
+  ready: 'Ready', needsAttention: 'Needs attention', modeName: 'Name', modeBasic: 'Basic', modeExpert: 'Expert',
+  basicUnfit: 'This value uses features the basic form cannot show. It is shown read-only; edit it in Expert.',
+  startBasic: 'Start a basic schema', invalidJson: 'This is not valid JSON yet.', noNames: 'No names are defined.'
 });
 export function captureFixedInputMessages(input?: Partial<FixedInputViewMessages>): FixedInputViewMessages {
   if (input === undefined) return defaultMessages;
@@ -70,8 +90,78 @@ function liveIssues(context: EditorViewContext): readonly ValidationIssue[] {
 
 let nextFixedViewId = 0;
 
+type JsonMode = 'name' | 'basic' | 'expert';
+const EMPTY_BASIC_SCHEMA: JsonObject = {type: 'object', properties: {}};
+
+function initialMode(input: FixedInputViewDescription['inputs'][string], value: JsonValue | undefined): JsonMode {
+  if (typeof value === 'string' && input.names !== undefined) return 'name';
+  if (input.basic !== undefined && (input.basicFits === true || value === undefined || value === '')) return 'basic';
+  return 'expert';
+}
+
+/** A collapsible section for one JSON input: a status mark, then name, basic, or expert editing. */
+function JsonSection({argument, input, entry, value, label, disabled, invalid, update, messages, renderForm}: {
+  argument: string; input: FixedInputViewDescription['inputs'][string]; entry: JsonObject; value: JsonValue | undefined;
+  label: string; disabled: boolean; invalid: boolean; messages: FixedInputViewMessages;
+  update: (argument: string, value: JsonValue, buffer?: string) => void; renderForm?: FixedJsonFormRenderer;
+}): React.ReactElement {
+  const modes: JsonMode[] = [...(input.names !== undefined ? ['name' as const] : []),
+    ...(input.basic !== undefined && renderForm ? ['basic' as const] : []), 'expert'];
+  const [mode, setMode] = React.useState<JsonMode>(() => {
+    const first = initialMode(input, value);
+    return modes.includes(first) ? first : 'expert';
+  });
+  const empty = value === undefined || value === '' || value === null;
+  const [open, setOpen] = React.useState(!empty);
+  const expanded = open || invalid;
+  const buffer = typeof entry.buffer === 'string' ? entry.buffer : undefined;
+  const text = buffer ?? (value === undefined ? input.rawDisplay ?? '' : JSON.stringify(value, null, 2));
+  const unparsable = buffer !== undefined && (() => {try {JSON.parse(buffer);return false;} catch {return true;}})();
+  let body: React.ReactNode;
+  if (mode === 'name') {
+    const names = input.names ?? [];
+    const current = typeof value === 'string' ? value : '';
+    body = names.length === 0 && !current ? <p>{messages.noNames}</p> :
+      <select aria-label={label} value={current} disabled={disabled} onChange={event => update(argument, event.target.value)}>
+        {!names.includes(current) && <option value={current} disabled>{current || messages.currentValue}</option>}
+        {names.map(name => <option key={name} value={name}>{name}</option>)}
+      </select>;
+  } else if (mode === 'basic' && renderForm) {
+    if (input.basicFits === true) {
+      body = renderForm({label, data: value ?? EMPTY_BASIC_SCHEMA, disabled, onChange: data => update(argument, data)});
+    } else if (empty || typeof value === 'string') {
+      body = <button type="button" disabled={disabled} onClick={() => update(argument, EMPTY_BASIC_SCHEMA)}>{messages.startBasic}</button>;
+    } else {
+      body = <><p className="block-editor-fixed-json-unfit" role="note">{messages.basicUnfit}</p>
+        {renderForm({label, data: value ?? null, disabled: true, onChange: () => undefined})}</>;
+    }
+  } else {
+    body = <><textarea aria-label={label} spellCheck={false} value={text} disabled={disabled} rows={8}
+      onChange={event => {
+        const next = event.target.value;
+        try {update(argument, JSON.parse(next) as JsonValue, next);}
+        catch {update(argument, value ?? null, next);}
+      }} />
+      {unparsable && <p className="block-editor-fixed-error">{messages.invalidJson}</p>}</>;
+  }
+  return <details className="block-editor-fixed-json" open={expanded} data-fixed-json-mode={mode}
+    onToggle={event => setOpen((event.target as HTMLDetailsElement).open)}>
+    <summary>
+      <span className="block-editor-fixed-json-status" data-fixed-json-status={invalid ? 'attention' : 'ready'}
+        role="img" aria-label={invalid ? messages.needsAttention : messages.ready}>{invalid ? '\u26A0' : '\u2611'}</span>
+      {' '}{label}
+    </summary>
+    {modes.length > 1 && <div role="tablist" aria-label={`${label} mode`} className="block-editor-fixed-json-modes">
+      {modes.map(item => <button key={item} type="button" role="tab" aria-selected={mode === item}
+        disabled={disabled && mode !== item} onClick={() => setMode(item)}>
+        {item === 'name' ? messages.modeName : item === 'basic' ? messages.modeBasic : messages.modeExpert}</button>)}
+    </div>}
+    <div role="tabpanel">{body}</div>
+  </details>;
+}
+
 /** The session owns every buffer, including controls temporarily absent from the DOM. */
-function FixedInputView({context, messages}: {context: EditorViewContext; messages: FixedInputViewMessages}): React.ReactElement {
+function FixedInputView({context, messages, renderForm}: {context: EditorViewContext; messages: FixedInputViewMessages; renderForm?: FixedJsonFormRenderer}): React.ReactElement {
   const [, redraw] = React.useState(0);
   const [viewId] = React.useState(() => `block-editor-fixed-${++nextFixedViewId}`);
   React.useEffect(() => {
@@ -121,6 +211,10 @@ function FixedInputView({context, messages}: {context: EditorViewContext; messag
     const descriptions = [input.state === 'readonly' ? reasonId : '', invalid ? errorId : '', input.unverified ? unverifiedId : '', showOriginal ? originalId : ''].filter(Boolean).join(' ');
     const attributes = {'aria-invalid': invalid || undefined, 'data-block-editor-invalid': invalid ? 'true' : undefined,
       'aria-describedby': descriptions || undefined} as const;
+    if (input.control === 'json' && input.state === 'editable') {
+      return <JsonSection key={argument} argument={argument} input={input} entry={entry} value={value} label={label}
+        disabled={disabled} invalid={invalid} update={update} messages={messages} {...(renderForm ? {renderForm} : {})} />;
+    }
     let control: React.ReactNode;
     if (input.state === 'readonly') {
       control = <><output aria-label={label} {...attributes}>{input.rawDisplay ?? text}</output>
@@ -167,8 +261,9 @@ function FixedInputView({context, messages}: {context: EditorViewContext; messag
   })}</div>;
 }
 
-export function mountFixedInputView(container: HTMLElement, context: EditorViewContext, messages: FixedInputViewMessages = defaultMessages): () => void {
+export function mountFixedInputView(container: HTMLElement, context: EditorViewContext, messages: FixedInputViewMessages = defaultMessages,
+  renderForm?: FixedJsonFormRenderer): () => void {
   describe(context);
-  ReactDOM.render(<FixedInputView context={context} messages={messages} />, container);
+  ReactDOM.render(<FixedInputView context={context} messages={messages} {...(renderForm ? {renderForm} : {})} />, container);
   return () => {ReactDOM.unmountComponentAtNode(container);};
 }
