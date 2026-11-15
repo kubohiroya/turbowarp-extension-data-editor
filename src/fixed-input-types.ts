@@ -1,5 +1,5 @@
 import type {
-  BlockEditorHost, BlockReference, BlockSnapshot, EditorDefinition, JsonObject, JsonValue, LiteralArgumentChange, LiteralValue,
+  BlockEditorHost, BlockReference, BlockSnapshot, EditorDefinition, JsonObject, JsonValue, LiteralArgumentChange,
   ValidationIssue
 } from './types.js';
 import type {SchemaJsonValue, SchemaValidationContext} from './schema-types.js';
@@ -88,11 +88,6 @@ export interface FixedBlockSnapshot extends BlockSnapshot {
     readonly readOnlyArguments: readonly string[];
     readonly dependencies: readonly FixedInputDependency[];
     readonly inputs: Readonly<Record<string, FixedInputMetadata>>;
-    /**
-     * Each input's value when the block is placed from the palette, read by the host from the
-     * extension's block definition. Absent when the host cannot tell.
-     */
-    readonly defaults?: Readonly<Record<string, LiteralValue>>;
   };
 }
 

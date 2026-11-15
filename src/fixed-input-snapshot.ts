@@ -1,4 +1,5 @@
 import {snapshotJson} from './schema-json.js';
+import {captureDefaults} from './data.js';
 import {captureFixedBranchRules} from './fixed-input-branches.js';
 import type {FixedBlockSnapshot, FixedInputDeclaration, FixedInputDependency, FixedInputMetadata} from './fixed-input-types.js';
 import type {ArgumentSlot, BlockReference, LiteralValue} from './types.js';
@@ -138,26 +139,19 @@ export function captureFixedSnapshot(
   }
   if (readOnlyArguments.some(name => !Object.hasOwn(inputs, name))) return fail();
   const capturedDependencies = dependencies(context.dependencies, editable);
-  let defaults: Record<string, LiteralValue> | undefined;
-  if (context.defaults !== undefined) {
-    const capturedDefaults = record(context.defaults);
-    defaults = Object.create(null) as Record<string, LiteralValue>;
-    for (const name of Object.keys(capturedDefaults)) {
-      const raw = capturedDefaults[name];
-      if (typeof raw !== 'string' && typeof raw !== 'number' && typeof raw !== 'boolean') return fail();
-      defaults[name] = raw;
-    }
-    Object.freeze(defaults);
-  }
+  let defaults: Readonly<Record<string, LiteralValue>> | undefined;
+  try {
+    defaults = captureDefaults(value && typeof value === 'object' && Object.hasOwn(value, 'defaults') ? own(value, 'defaults') : undefined);
+  } catch {return fail();}
   if (declaration) {
     const expected = captureFixedInputDeclaration(declaration);
     if (contractId !== expected.contractId || contractRevision !== expected.contractRevision ||
         !sameNames([...editable], expected.editableArguments) || !sameNames(readOnlyArguments, expected.readOnlyArguments) ||
         canonical(capturedDependencies) !== canonical(expected.dependencies)) return fail();
   }
-  return Object.freeze({targetId, blockId, opcode, revision, arguments: Object.freeze(argumentsCopy),
+  return Object.freeze({targetId, blockId, opcode, revision, arguments: Object.freeze(argumentsCopy), ...(defaults ? {defaults} : {}),
     fixedContext: Object.freeze({contractId, contractRevision, generation, readOnlyArguments,
-      dependencies: capturedDependencies, inputs: Object.freeze(inputs), ...(defaults ? {defaults} : {})})});
+      dependencies: capturedDependencies, inputs: Object.freeze(inputs)})});
 }
 
 export function sameFixedSnapshot(left: FixedBlockSnapshot, right: FixedBlockSnapshot): boolean {

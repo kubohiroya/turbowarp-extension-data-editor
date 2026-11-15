@@ -43,3 +43,25 @@ test('without defaults from the host, the save button keeps its old behaviour', 
 test('defaults that are not literals make the snapshot invalid', t => {
   assert.throws(() => open(t, 'x', {NAME: {nested: true}}));
 });
+
+test('single editors follow the same Save and Update rule', async () => {
+  const {EditorRegistry} = await import('../dist/index.js');
+  const {jsonPropertiesEditor} = await import('../examples/json-properties.ts');
+  const registry = new EditorRegistry();
+  registry.register(jsonPropertiesEditor);
+  const open = (value, defaults) => {
+    const block = {targetId: 'sprite', blockId: 'scene', opcode: 'story_scene', revision: '1',
+      arguments: {PROPERTIES: {kind: 'literal', value}}, ...(defaults ? {defaults} : {})};
+    return registry.open(block, {readBlock: () => block, commit: () => {}});
+  };
+  const fresh = open('{}', {PROPERTIES: '{}'});
+  assert.equal(fresh.getState().saveMode, 'save');assert.equal(fresh.getState().canSave, true);
+  const edited = open('{"duration":2}', {PROPERTIES: '{}'});
+  assert.equal(edited.getState().saveMode, 'update');assert.equal(edited.getState().canSave, false);
+  edited.setDraft({properties: '{"duration":3}'});
+  assert.equal(edited.getState().canSave, true);
+  edited.setDraft({properties: '{"duration":2}'});
+  assert.equal(edited.getState().canSave, false, 'typing the saved value back counts as unchanged');
+  assert.equal(open('{}').getState().saveMode, undefined);
+  assert.throws(() => open('{}', {PROPERTIES: {}}));
+});
