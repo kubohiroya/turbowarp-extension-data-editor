@@ -63,7 +63,8 @@ export function formFixture(policy, seed, configure = {}) {
   const raw = Object.fromEntries(Object.entries(seed).filter(([, value]) => value && typeof value === 'object' && !Array.isArray(value)));
   const live = {targetId: 'sprite', blockId: 'fixed', opcode: options.opcodes[0], revision: 'r1', arguments: {},
     fixedContext: {contractId: options.contractId, contractRevision: options.contractRevision, generation: 'g1',
-      readOnlyArguments: options.readOnlyArguments ?? [], dependencies: options.dependencies ?? [], inputs: {}}};
+      readOnlyArguments: options.readOnlyArguments ?? [], dependencies: options.dependencies ?? [], inputs: {}},
+    ...(configure.defaults ? {defaults: configure.defaults} : {})};
   for (const argument of new Set([...options.bindings.map(item => item.argument), ...(options.readOnlyArguments ?? []), ...Object.keys(raw)])) {
     const spec = raw[argument] ?? {state: 'missing'};
     const role = options.readOnlyArguments?.includes(argument) ? 'readonly' : 'editable';

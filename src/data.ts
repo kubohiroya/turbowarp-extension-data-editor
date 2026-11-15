@@ -42,6 +42,18 @@ export function captureReference(reference: BlockReference): BlockReference {
   return Object.freeze({targetId: reference.targetId, blockId: reference.blockId});
 }
 
+/** Copies the host-reported defaults; throws when one is not a literal. */
+export function captureDefaults(value: unknown): Readonly<Record<string, LiteralValue>> | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid block defaults.');
+  const copy: Record<string, LiteralValue> = Object.create(null) as Record<string, LiteralValue>;
+  for (const [name, raw] of Object.entries(value)) {
+    if (!isLiteral(raw)) throw new TypeError(`Invalid default: ${name}`);
+    copy[name] = raw;
+  }
+  return Object.freeze(copy);
+}
+
 export function captureSnapshot(snapshot: BlockSnapshot, reference: BlockReference): BlockSnapshot {
   if (snapshot.targetId !== reference.targetId || snapshot.blockId !== reference.blockId ||
       typeof snapshot.opcode !== 'string' || !snapshot.opcode ||
@@ -60,9 +72,10 @@ export function captureSnapshot(snapshot: BlockSnapshot, reference: BlockReferen
       : Object.freeze({kind: 'literal', value: slot.value});
     return [name, copy] as const;
   });
+  const defaults = captureDefaults(snapshot.defaults);
   return Object.freeze({
     ...captureReference(reference), opcode: snapshot.opcode, revision: snapshot.revision,
-    arguments: Object.freeze(Object.fromEntries(entries))
+    arguments: Object.freeze(Object.fromEntries(entries)), ...(defaults ? {defaults} : {})
   });
 }
 
