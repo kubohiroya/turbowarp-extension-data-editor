@@ -145,10 +145,25 @@ export class EditorSession implements EditorViewContext {
   }
 
   getState(): SessionState {
+    const mode = this.#saveMode();
+    const blocked = mode?.saveMode === 'update' && mode.unchanged;
     return Object.freeze({
-      status: this.#status, canSave: this.#status === 'editing' && this.#issues.length === 0,
-      issues: this.#issues, error: this.#error
+      status: this.#status, canSave: this.#status === 'editing' && this.#issues.length === 0 && !blocked,
+      issues: this.#issues, error: this.#error, ...mode
     });
+  }
+
+  /** Save while every input holds the default the host reported, Update otherwise (fixed input editors only). */
+  #saveMode(): {saveMode: 'save' | 'update'; unchanged: boolean} | undefined {
+    if (!isFixedInputEditor(this.#definition)) return undefined;
+    const snapshot = this.#snapshot as FixedBlockSnapshot;
+    const defaults = snapshot.fixedContext.defaults;
+    if (!defaults) return undefined;
+    const atDefault = Object.entries(snapshot.arguments).every(([name, slot]) =>
+      !Object.hasOwn(defaults, name) || (slot.kind === 'literal' && String(slot.value) === String(defaults[name])));
+    const inputs = isJsonRecord(this.#draft.inputs) ? this.#draft.inputs : {};
+    const unchanged = Object.values(inputs).every(entry => !isJsonRecord(entry) || entry.changed !== true);
+    return {saveMode: atDefault ? 'save' : 'update', unchanged};
   }
 
   subscribe(listener: () => void): () => void {

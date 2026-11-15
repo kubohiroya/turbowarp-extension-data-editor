@@ -25,6 +25,26 @@ import {initializeFixedFields, inspectFixedArgument, prepareFixedChange, restore
 import {snapshotJson} from '../schema-json.js';
 import {validateFixedBranchChanges} from '../fixed-input-branches.js';
 
+/** Each argument's palette default, from the extension's `getInfo`, or undefined when it cannot be read. */
+const blockDefaults = (vm: NativeVM, extensionId: string, opcode: string):
+    Record<string, string | number | boolean> | undefined => {
+    try {
+        const extension = (vm.runtime._blockInfo || []).find(item => (item as {id?: unknown})?.id === extensionId) as
+            {blocks?: readonly {info?: {opcode?: unknown; arguments?: Record<string, {defaultValue?: unknown}>}}[]} | undefined;
+        const short = opcode.slice(extensionId.length + 1);
+        const info = extension?.blocks?.find(item => item?.info?.opcode === short)?.info;
+        if (!info) return undefined;
+        const defaults: Record<string, string | number | boolean> = Object.create(null);
+        for (const [name, argument] of Object.entries(info.arguments || {})) {
+            const value = argument?.defaultValue;
+            defaults[name] = typeof value === 'number' || typeof value === 'boolean' ? value : value === undefined ? '' : String(value);
+        }
+        return defaults;
+    } catch {
+        return undefined;
+    }
+};
+
 const own = (object: unknown, name: string) => {
     const descriptor = object ? Object.getOwnPropertyDescriptor(object, name) : undefined;
     if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) {
@@ -159,11 +179,13 @@ export default function createFixedInputPort({ScratchBlocks, workspace, vm, regi
         }
         const untouched = untouchedState(block, vmBlock, target, bindings, identify);
         signature.push(untouched);
+        const defaults = blockDefaults(vm, descriptor.extensionId, block.type);
         const snapshot = captureFixedSnapshot({targetId: target.id, blockId: block.id, opcode: block.type,
             revision: JSON.stringify(signature), arguments: arguments_, fixedContext: {
                 contractId: declaration.contractId, contractRevision: declaration.contractRevision,
                 generation: String(state.generation), readOnlyArguments: declaration.readOnlyArguments,
-                dependencies: declaration.dependencies, inputs
+                dependencies: declaration.dependencies, inputs,
+                ...(defaults ? {defaults} : {})
             }}, reference, declaration);
         return {snapshot, bindings, declaration, target, block, vmBlock, state, untouched, runtime: vm.runtime};
     };
