@@ -23,6 +23,7 @@ import {BlockEditorConflictError, FIXED_INPUTS_CAPABILITY} from '../index.js';
 import {captureFixedInputDeclaration, captureFixedSnapshot, sameFixedSnapshot} from '../fixed-input-snapshot.js';
 import {initializeFixedFields, inspectFixedArgument, prepareFixedChange, restoreFixedField, captureFixedFieldState} from './fixed-fields.js';
 import {snapshotJson} from '../schema-json.js';
+import {blockDefaults} from './block-defaults.js';
 import {validateFixedBranchChanges} from '../fixed-input-branches.js';
 
 const own = (object: unknown, name: string) => {
@@ -159,12 +160,13 @@ export default function createFixedInputPort({ScratchBlocks, workspace, vm, regi
         }
         const untouched = untouchedState(block, vmBlock, target, bindings, identify);
         signature.push(untouched);
+        const defaults = blockDefaults(vm, descriptor.extensionId, block.type);
         const snapshot = captureFixedSnapshot({targetId: target.id, blockId: block.id, opcode: block.type,
             revision: JSON.stringify(signature), arguments: arguments_, fixedContext: {
                 contractId: declaration.contractId, contractRevision: declaration.contractRevision,
                 generation: String(state.generation), readOnlyArguments: declaration.readOnlyArguments,
                 dependencies: declaration.dependencies, inputs
-            }}, reference, declaration);
+            }, ...(defaults ? {defaults} : {})}, reference, declaration);
         return {snapshot, bindings, declaration, target, block, vmBlock, state, untouched, runtime: vm.runtime};
     };
 

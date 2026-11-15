@@ -15,6 +15,8 @@ import type {
 
 export class EditorSession implements EditorViewContext {
   #draft: JsonObject;
+  /** The draft as first read, to tell whether saving would change anything. */
+  #initialDraft = '';
   #status: SessionStatus = 'editing';
   #issues: readonly ValidationIssue[] = [];
   #error: unknown;
@@ -43,6 +45,7 @@ export class EditorSession implements EditorViewContext {
     if (isFixedInputEditor(definition) && !supportsFixedInputEditing(host)) throw new TypeError('Fixed input editors require a compatible host.');
     this.#draft = this.#copyDraft(isFixedInputEditor(definition)
       ? definition.readFixed(this.#snapshot as FixedBlockSnapshot) : definition.read(this.#snapshot));
+    this.#initialDraft = JSON.stringify(this.#draft);
     if (isFixedInputEditor(definition) && this.#subscribeRegistrationChanges) {
       const unsubscribe = this.#subscribeRegistrationChanges(() => {
         if (this.#isRegistered && !this.#isRegistered() && (this.#status === 'editing' || this.#status === 'saving')) {
@@ -145,10 +148,29 @@ export class EditorSession implements EditorViewContext {
   }
 
   getState(): SessionState {
+    const mode = this.#saveMode();
+    const blocked = mode?.saveMode === 'update' && mode.unchanged;
     return Object.freeze({
-      status: this.#status, canSave: this.#status === 'editing' && this.#issues.length === 0,
-      issues: this.#issues, error: this.#error
+      status: this.#status, canSave: this.#status === 'editing' && this.#issues.length === 0 && !blocked,
+      issues: this.#issues, error: this.#error, ...mode
     });
+  }
+
+  /** Save while every input holds the default the host reported, Update otherwise. */
+  #saveMode(): {saveMode: 'save' | 'update'; unchanged: boolean} | undefined {
+    const snapshot = this.#snapshot;
+    const defaults = snapshot.defaults;
+    if (!defaults) return undefined;
+    const atDefault = Object.entries(snapshot.arguments).every(([name, slot]) =>
+      !Object.hasOwn(defaults, name) || (slot.kind === 'literal' && String(slot.value) === String(defaults[name])));
+    let unchanged: boolean;
+    if (isFixedInputEditor(this.#definition)) {
+      const inputs = isJsonRecord(this.#draft.inputs) ? this.#draft.inputs : {};
+      unchanged = Object.values(inputs).every(entry => !isJsonRecord(entry) || entry.changed !== true);
+    } else {
+      unchanged = JSON.stringify(this.#draft) === this.#initialDraft;
+    }
+    return {saveMode: atDefault ? 'save' : 'update', unchanged};
   }
 
   subscribe(listener: () => void): () => void {
