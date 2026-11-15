@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import {parseFixedNumberInput} from './fixed-input-schema.js';
 import type {FixedInputViewDescription} from './fixed-input-types.js';
-import type {EditorViewContext, JsonObject, JsonValue} from './types.js';
+import type {EditorViewContext, JsonObject, JsonValue, ValidationIssue} from './types.js';
 
 export interface FixedInputViewMessages {
   readonly reset: string;
@@ -58,6 +58,16 @@ function describe(context: EditorViewContext): FixedInputViewDescription {
   return result;
 }
 
+/** Presentation issues plus the save-time check, so Save is disabled as soon as the draft would be rejected. */
+function liveIssues(context: EditorViewContext): readonly ValidationIssue[] {
+  const issues = [...describe(context).issues];
+  const checked = typeof context.checkFixedInput === 'function' ? context.checkFixedInput() ?? [] : [];
+  for (const issue of checked) {
+    if (!issues.some(item => item.message === issue.message && item.path === issue.path)) issues.push(issue);
+  }
+  return issues;
+}
+
 let nextFixedViewId = 0;
 
 /** The session owns every buffer, including controls temporarily absent from the DOM. */
@@ -88,7 +98,7 @@ function FixedInputView({context, messages}: {context: EditorViewContext; messag
     if (record(previous) && (previous.readOnly === true || previous.repair === true)) entry.repair = true;
     Object.defineProperty(next.inputs, argument, {value: entry, enumerable: true, configurable: true, writable: true});
     context.setDraft(next);
-    context.setValidationIssues(describe(context).issues);
+    context.setValidationIssues(liveIssues(context));
   };
   const hasInactiveEdits = Object.entries(description.inputs).some(([argument, input]) =>
     input.state === 'hidden' && record(inputs[argument]) && inputs[argument].changed === true);

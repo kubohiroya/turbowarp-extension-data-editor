@@ -27,6 +27,10 @@ export class EditorView {
         assertMounted();
         return owner.getFixedInputView!();
       }} : {}),
+      ...(owner.checkFixedInput ? {checkFixedInput: () => {
+        assertMounted();
+        return owner.checkFixedInput!();
+      }} : {}),
       setDraft: (draft: JsonObject) => { assertMounted(); owner.setDraft(draft); },
       setValidationIssues: (issues: readonly ValidationIssue[]) => {
         assertMounted();

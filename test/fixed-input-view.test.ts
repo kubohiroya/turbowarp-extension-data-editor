@@ -143,13 +143,59 @@ for (const locale of ['en', 'ja']) test(`hidden draft retention is explained in 
   await f.change('TRIGGER', 'condition');assert.equal((await f.save()).status, 'saved');assert.equal(f.live.arguments.TIMEOUT.value, '10');
 });
 
-test('mount change and remount do not invoke owner context encoder or validator', async t => {
+test('owner checks run once per edit, never on mount, render or remount', async t => {
   let contexts = 0;let encodes = 0;let validations = 0;const configured = options();
   configured.validationContext = () => {contexts++;return {consumerId: 'common-fixture', nowMs: 0, settings: null};};
   configured.bindings[0] = binding('TEXT', {kind: 'text'}, {type: 'string'}, {encode: value => {encodes++;return value;}, validateCandidate: () => {validations++;return [];}});
-  const f = await domFixture(t, 'common-only', seed(), {options: configured});await f.change('TEXT', 'after');await f.unmount();await f.mount();
-  assert.equal(contexts, 0);assert.equal(encodes, 0);assert.equal(validations, 0);
-  assert.equal((await f.save()).status, 'saved');assert.equal(contexts, 1);assert.equal(encodes, 1);assert.equal(validations, 1);
+  const f = await domFixture(t, 'common-only', seed(), {options: configured});
+  assert.deepEqual([contexts, encodes, validations], [0, 0, 0]);
+  await f.change('TEXT', 'after');assert.deepEqual([contexts, encodes, validations], [1, 1, 1]);
+  await f.unmount();await f.mount();assert.deepEqual([contexts, encodes, validations], [1, 1, 1]);
+  assert.equal((await f.save()).status, 'saved');assert.deepEqual([contexts, encodes, validations], [2, 2, 2]);
+});
+
+test('owner validateCandidate disables Save while editing without rendering owner text', async t => {
+  const candidates = [];const configured = options();
+  configured.bindings[0] = binding('TEXT', {kind: 'text'}, {type: 'string'}, {validateCandidate: candidate => {
+    candidates.push(candidate);return candidate === 'taken' ? [{message: 'private duplicate name', path: '/TEXT'}] : [];
+  }});
+  const f = await domFixture(t, 'common-only', seed(), {options: configured});
+  await f.change('TEXT', 'taken');
+  assert.equal(f.session.getState().canSave, false);assert.deepEqual(candidates, ['taken']);
+  const issues = f.session.getState().issues;assert.equal(issues.length, 1);
+  assert.equal(issues[0].path, '/TEXT');assert.match(issues[0].message, /owner-input-invalid/);
+  assert.equal(f.byLabel('TEXT').getAttribute('aria-invalid'), 'true');
+  assert.ok(f.container.textContent.includes('Check this value before saving.'));
+  assert.ok(!f.container.textContent.includes('private duplicate name'));
+  await f.change('TEXT', 'free');assert.equal(f.session.getState().canSave, true);
+  assert.equal(f.byLabel('TEXT').hasAttribute('aria-invalid'), false);
+  assert.equal((await f.save()).status, 'saved');assert.equal(f.live.arguments.TEXT.value, 'free');
+});
+
+test('a selector edit rechecks the unchanged active dependent against the new branch while editing', async t => {
+  const configured = {...options(), readOnlyArguments: [], bindings: [
+    binding('SCOPE', {kind: 'enum', choices: [{value: 'local'}, {value: 'global'}]}, {type: 'string', enum: ['local', 'global']}), binding('NAME')],
+  dependencies: [{selector: 'SCOPE', dependents: ['NAME']}],
+  branchPolicies: [{selector: 'SCOPE', cases: [{values: ['local'], activeDependents: ['NAME']}, {values: ['global'], activeDependents: ['NAME'],
+    bindings: [binding('NAME', {kind: 'text'}, {type: 'string'}, {validateCandidate: (candidate, _context, snapshot) =>
+      snapshot.arguments.SCOPE.value === 'global' && candidate === 'shared' ? [{message: 'private clash'}] : []})]}]}]};
+  const f = await domFixture(t, 'common-only', {SCOPE: {literal: 'local'}, NAME: {literal: 'shared'}}, {options: configured});
+  assert.equal(f.session.getState().canSave, true);
+  await f.change('SCOPE', 'global');assert.equal(f.session.getState().canSave, false);
+  assert.deepEqual(f.session.getState().issues.map(issue => issue.path), ['/NAME']);
+  assert.equal(f.byLabel('NAME').getAttribute('aria-invalid'), 'true');assert.ok(!f.container.textContent.includes('private clash'));
+  await f.change('NAME', 'unique');assert.equal(f.session.getState().canSave, true);
+  await f.change('NAME', 'shared');assert.equal(f.session.getState().canSave, false);
+  await f.change('SCOPE', 'local');assert.equal(f.session.getState().canSave, true);
+  assert.equal((await f.save()).status, 'saved');assert.equal(f.live.arguments.NAME.value, 'shared');
+});
+
+test('a throwing owner check disables Save with a coded diagnostic only', async t => {
+  const configured = options();
+  configured.bindings[0] = binding('TEXT', {kind: 'text'}, {type: 'string'}, {validateCandidate: () => {throw new Error('private failure');}});
+  const f = await domFixture(t, 'common-only', seed(), {options: configured});await f.change('TEXT', 'after');
+  assert.equal(f.session.getState().canSave, false);assert.match(f.session.getState().issues[0].message, /fixed-input-invalid/);
+  assert.ok(!f.container.textContent.includes('private failure'));
 });
 
 test('an enum projection alias displays its exact opening raw and keeps a no-op byte-identical', async t => {

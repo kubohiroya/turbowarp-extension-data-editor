@@ -66,6 +66,11 @@ export interface EditorViewContext {
   getDraft(): JsonObject;
   /** Fixed views obtain only safe presentation data, never live host objects. */
   getFixedInputView?(): FixedInputViewDescription | undefined;
+  /**
+   * Run the save-time fixed check (encode, schema and owner validateCandidate) on the current draft.
+   * Unlike getFixedInputView, this calls owner callbacks, so views call it per edit, not per render.
+   */
+  checkFixedInput?(): readonly ValidationIssue[] | undefined;
   /** Updates are rejected after this view unmounts, even when its session stays open. */
   setDraft(draft: JsonObject): void;
   /** Report live UI validation; save() always independently validates again. */

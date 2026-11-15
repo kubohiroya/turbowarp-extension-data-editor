@@ -62,7 +62,7 @@ commit直前にproject/target、親・shadow・field・VM、読取依存、登�
 
 callbackを含まない`branchRules`をregistryの正本に保持する。sessionとhostはこの正本でgroupの全patchを検査する。selectorの保存rawが変わる場合は未編集のactive依存も最終branchで検査し、reporterを黙って置換しない。selector未変更なら変更active入力だけを検査するので、現在のbranchで必須でないreadonly reporterは評価せず保持できる。変更候補のencodeは各入力一度だけ、構築済み候補を再投影したSchemaとowner検査へ同じ値を渡す。
 
-`describeFixed`とoptional `EditorViewContext.getFixedInputView()`はeditable/readonly/hidden・control/choices・表示上の問題を返す。表示時にcontext provider・encode・owner validatorを呼ばない。フォームは`/rjsf`登録時のmountで接続し、rootのpure factoryと`./schema`はReact非依存を維持する。enumは保存valueとlabelを分離し、未知raw・aliasを表示して、既知候補を明示選択するまで保持する。数値はtext bufferで未完成の`1e`も保持し、色は原文の入力と表示用pickerを分離する。Schema defaultを補わない。
+`describeFixed`とoptional `EditorViewContext.getFixedInputView()`はeditable/readonly/hidden・control/choices・表示上の問題を返す。表示時にcontext provider・encode・owner validatorを呼ばない。入力のたびに、固定フォームはoptional `EditorViewContext.checkFixedInput()`で保存時と同じ検査（encode・Schema・owner `validateCandidate`、selector変更時の有効な従属入力の再検査を含む）を実行し、問題があれば保存ボタンを無効にする。mount・再mount・描画では呼ばない。owner診断本文は保存時と同じく`owner-input-invalid`等の定型診断に置き換え、表示しない。フォームは`/rjsf`登録時のmountで接続し、rootのpure factoryと`./schema`はReact非依存を維持する。enumは保存valueとlabelを分離し、未知raw・aliasを表示して、既知候補を明示選択するまで保持する。数値はtext bufferで未完成の`1e`も保持し、色は原文の入力と表示用pickerを分離する。Schema defaultを補わない。
 
 `fixedInputMessages`には表示文のobjectまたはmount時同期providerを渡せる。GUIは実際のIntl localeに基づく日英文言を供給する。readonly・reporter未評価・非表示draft・validation・resetもlocaleへ従い、診断code/contract IDはAPIに残してdialog本文では一般的な説明を示す。各fieldにはlabel、固有error ID、aria-invalid/aria-describedbyを付ける。
 
