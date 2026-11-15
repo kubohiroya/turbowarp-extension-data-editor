@@ -23,27 +23,8 @@ import {BlockEditorConflictError, FIXED_INPUTS_CAPABILITY} from '../index.js';
 import {captureFixedInputDeclaration, captureFixedSnapshot, sameFixedSnapshot} from '../fixed-input-snapshot.js';
 import {initializeFixedFields, inspectFixedArgument, prepareFixedChange, restoreFixedField, captureFixedFieldState} from './fixed-fields.js';
 import {snapshotJson} from '../schema-json.js';
+import {blockDefaults} from './block-defaults.js';
 import {validateFixedBranchChanges} from '../fixed-input-branches.js';
-
-/** Each argument's palette default, from the extension's `getInfo`, or undefined when it cannot be read. */
-const blockDefaults = (vm: NativeVM, extensionId: string, opcode: string):
-    Record<string, string | number | boolean> | undefined => {
-    try {
-        const extension = (vm.runtime._blockInfo || []).find(item => (item as {id?: unknown})?.id === extensionId) as
-            {blocks?: readonly {info?: {opcode?: unknown; arguments?: Record<string, {defaultValue?: unknown}>}}[]} | undefined;
-        const short = opcode.slice(extensionId.length + 1);
-        const info = extension?.blocks?.find(item => item?.info?.opcode === short)?.info;
-        if (!info) return undefined;
-        const defaults: Record<string, string | number | boolean> = Object.create(null);
-        for (const [name, argument] of Object.entries(info.arguments || {})) {
-            const value = argument?.defaultValue;
-            defaults[name] = typeof value === 'number' || typeof value === 'boolean' ? value : value === undefined ? '' : String(value);
-        }
-        return defaults;
-    } catch {
-        return undefined;
-    }
-};
 
 const own = (object: unknown, name: string) => {
     const descriptor = object ? Object.getOwnPropertyDescriptor(object, name) : undefined;
@@ -184,9 +165,8 @@ export default function createFixedInputPort({ScratchBlocks, workspace, vm, regi
             revision: JSON.stringify(signature), arguments: arguments_, fixedContext: {
                 contractId: declaration.contractId, contractRevision: declaration.contractRevision,
                 generation: String(state.generation), readOnlyArguments: declaration.readOnlyArguments,
-                dependencies: declaration.dependencies, inputs,
-                ...(defaults ? {defaults} : {})
-            }}, reference, declaration);
+                dependencies: declaration.dependencies, inputs
+            }, ...(defaults ? {defaults} : {})}, reference, declaration);
         return {snapshot, bindings, declaration, target, block, vmBlock, state, untouched, runtime: vm.runtime};
     };
 

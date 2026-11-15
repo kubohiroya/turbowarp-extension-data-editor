@@ -2,6 +2,7 @@ import type {TurboWarpHostOptions, TurboWarpBlockEditorHost} from '../turbowarp.
 import type {BlockReference} from '../types.js';
 import type {DescendantEditorHost, SubtreeArgumentChange, SubtreeSnapshot} from '../descendant-types.js';
 import type {FixedInputEditorHost} from '../fixed-input-types.js';
+import {blockDefaults} from './block-defaults.js';
 import type {BlockRecord, NativeChange, NativeScratchBlocks, NativeWorkspace, NativeVM, TextBinding} from './native-types.js';
 import {BlockEditorConflictError, DESCENDANT_EDITING_CAPABILITY} from '../index.js';
 import collectBlockEditorSubtree from './subtree.js';
@@ -134,13 +135,15 @@ const createBlockEditorHost = ({ScratchBlocks: nativeBlocks, workspace: nativeWo
             fields.set(name, {shadow, field, value: field.getValue()});
             signature.push(name, identify(shadow), identify(field), identify(vmShadow), shadow.id);
         }
+        const defaults = !structural && descriptor ? blockDefaults(vm, descriptor.extensionId, block.type) : undefined;
         return {
             snapshot: {
                 targetId: target.id,
                 blockId: block.id,
                 opcode: block.type,
                 revision: JSON.stringify(signature),
-                arguments: slots
+                arguments: slots,
+                ...(defaults ? {defaults} : {})
             },
             fields,
             block,

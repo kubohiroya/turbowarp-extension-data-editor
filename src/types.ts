@@ -25,6 +25,11 @@ export interface BlockSnapshot extends BlockReference {
   /** An opaque host token that changes when identity, editability or relevant data changes. */
   readonly revision: string;
   readonly arguments: Readonly<Record<string, ArgumentSlot>>;
+  /**
+   * Each input's value when the block is placed from the palette, read by the host from the
+   * extension's block definition. Absent when the host cannot tell.
+   */
+  readonly defaults?: Readonly<Record<string, LiteralValue>>;
 }
 
 export interface LiteralArgumentChange {
