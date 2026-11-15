@@ -114,6 +114,22 @@ export class EditorSession implements EditorViewContext {
     }
   }
 
+  /**
+   * Run the same synchronous check as save, without committing, so a fixed form can disable Save
+   * while the draft is invalid. Owner text is reduced to the editor's coded diagnostics, as on save.
+   */
+  checkFixedInput(): readonly ValidationIssue[] | undefined {
+    this.#assertOpen();
+    const definition = this.#definition;
+    if (!isFixedInputEditor(definition)) return undefined;
+    try {
+      const prepared = captureFixedPreparedSave(definition, this.#copyDraft(this.#draft), this.#snapshot as FixedBlockSnapshot);
+      return prepared.kind === 'invalid' ? this.#copyIssues(prepared.issues) : Object.freeze([]);
+    } catch {
+      return Object.freeze([Object.freeze({message: 'Fixed input validation failed: fixed-check-unavailable.'})]);
+    }
+  }
+
   setDraft(draft: JsonObject): void {
     if (this.#status !== 'editing') throw new Error('The session is not editable.');
     this.#draft = this.#copyDraft(draft);
