@@ -3,4 +3,4 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@kubohiroya/turbowarp-plus-editor-host@0.1.0'
   - '@kubohiroya/turbowarp-plus-editor-test-runtime-blocks@0.1.0'
-  - '@kubohiroya/turbowarp-plus-editor-test-runtime@0.2.0'
+  - '@kubohiroya/turbowarp-plus-editor-test-runtime@0.2.0 || 0.3.0'
