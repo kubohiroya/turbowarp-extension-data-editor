@@ -5,7 +5,7 @@
     "url": "https://github.com/kubohiroya"
   },
   "name": "@kubohiroya/turbowarp-extension-data-editor",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Custom editor sessions and UI for structured data handled by TurboWarp extensions",
   "license": "MPL-2.0",
   "type": "module",
@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@kubohiroya/turbowarp-plus-editor-test-runtime": "0.2.0",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.1",
     "@turbowarp/jszip": "^3.12.0",
     "@types/react": "^16.14.70",
     "@types/react-dom": "^16.9.25",
