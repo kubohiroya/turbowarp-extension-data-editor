@@ -1,0 +1,32 @@
+.tw-plus-block-editor {
+    --block-editor-background: var(--ui-modal-background);
+    --block-editor-text: var(--text-primary);
+    --block-editor-input: var(--input-background);
+    --block-editor-button: var(--ui-white);
+    --block-editor-border: var(--ui-black-transparent);
+    --block-editor-radius: 0.5rem;
+    --block-editor-error-border: #c62828;
+    --block-editor-error-text: #a61b1b;
+    --block-editor-error-tint: rgba(198, 40, 40, 0.08);
+}
+
+.tw-plus-block-editor.tw-plus-block-editor-dark {
+    --block-editor-error-border: #ff8a8a;
+    --block-editor-error-text: #ffb3b3;
+    --block-editor-error-tint: rgba(255, 138, 138, 0.12);
+}
+
+/*
+ * The dialog's frame, stated on two classes so that nothing depends on which stylesheet the
+ * bundler happened to inject last.
+ *
+ * Both this file and the editor package's own stylesheet set the frame on the same element with
+ * one class each, so a tie used to be broken by injection order — and that order follows the module
+ * graph. It changed when the package moved to the distributing host: the frame's top margin went
+ * from the package's 60px to this GUI's modal default of 100px, which pushed the dialog's buttons
+ * out of a 900px viewport. Two classes here settle it wherever the rules land.
+ */
+.tw-plus-block-editor.tw-plus-block-editor-layout {
+    width: min(820px, calc(100vw - 32px));
+    margin: 60px auto;
+}

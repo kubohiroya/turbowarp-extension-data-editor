@@ -11,7 +11,7 @@ await build({
     target: 'node24'
 });
 await build({
-    entryPoints: ['dist/index.js', 'dist/rjsf.js', 'dist/react.js', 'dist/turbowarp.js', 'dist/schema.js'],
+    entryPoints: ['dist/index.js', 'dist/rjsf.js', 'dist/react.js', 'dist/turbowarp.js', 'dist/schema.js', 'dist/plus.js'],
     outdir: 'dist/webpack4',
     bundle: true,
     splitting: true,

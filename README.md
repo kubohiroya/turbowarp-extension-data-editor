@@ -84,6 +84,15 @@ Pass the host's ScratchBlocks, VM, workspace, registration service, and UI callb
 The GUI remains responsible for lifecycle management and connecting its Modal, translations, and theme.
 See the [TurboWarp adapter API (Japanese)](docs/turbowarp-adapter.md).
 
+### TurboWarp Plus distribution (`/plus`)
+
+`/plus` is the configuration the TurboWarp Plus Editor uses: its English and Japanese strings
+(`plusBlockEditorTranslations`, `fixedMessages`, `dialogMessages`), the capabilities it exposes
+(`exposeBlockEditorAPI`), and `createPlusBlockEditor({styles})`, which returns `createService`,
+`attach` (with nested blocks enabled) and `render`. Pass the dialog stylesheet your bundler loads
+from `/react/styles.css` as `styles`, and add `/plus.css` to the page as a global stylesheet; its
+class names are `plusBlockEditorClassNames`. A host only wires these up.
+
 ## Hierarchical sessions for descendants
 
 As an additional API for [shared infrastructure #2](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/2),
