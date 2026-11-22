@@ -42,13 +42,15 @@ test('exports the pure engine, synchronous composition and diagnostic bridge', (
   assert.deepEqual(schema.toValidationIssues([]), []);
 });
 
-test('preserves the eight existing exports, CSS side effects and the copy build', async () => {
+test('preserves the existing exports, adds the Plus distribution, CSS side effects and the copy build', async () => {
   const expected = {
     '.': {types: './dist/index.d.ts', import: './dist/index.js'},
     './rjsf': {types: './dist/rjsf.d.ts', import: './dist/rjsf.js'},
     './react': {types: './dist/react.d.ts', import: './dist/react.js'},
     './react/styles.css': './dist/react.css',
     './turbowarp': {types: './dist/turbowarp.d.ts', import: './dist/turbowarp.js'},
+    './plus': {types: './dist/plus.d.ts', import: './dist/plus.js'},
+    './plus.css': './dist/plus.css',
     './schema': {types: './dist/schema.d.ts', import: './dist/schema.js'},
     './webpack4': {require: './webpack4.cjs'},
     './build-info': './dist/build-info.json'
@@ -66,6 +68,7 @@ test('preserves the eight existing exports, CSS side effects and the copy build'
     }
   }
   assert.deepEqual(readFileSync(join(root, 'src/react.css')), readFileSync(join(root, 'dist/react.css')));
+  assert.deepEqual(readFileSync(join(root, 'src/plus.css')), readFileSync(join(root, 'dist/plus.css')));
   for (const entry of ['', '/rjsf', '/react', '/turbowarp']) {
     assert.ok(await import(`${packageName}${entry}`));
   }

@@ -11,10 +11,11 @@ function withBlockEditorWebpack4(config: WebpackConfig | WebpackConfig[], {hostR
     if (Array.isArray(config)) return config.map(item => withBlockEditorWebpack4(item, {hostRoot}));
     const prefix = '@kubohiroya/turbowarp-extension-data-editor';
     const alias = {...config.resolve?.alias};
-    for (const entry of ['index', 'rjsf', 'react', 'turbowarp', 'schema']) {
+    for (const entry of ['index', 'rjsf', 'react', 'turbowarp', 'schema', 'plus']) {
         alias[`${prefix}${entry === 'index' ? '' : `/${entry}`}$`] = path.join(__dirname, 'dist/webpack4', `${entry}.js`);
     }
     alias[`${prefix}/react/styles.css$`] = path.join(__dirname, 'dist/react.css');
+    alias[`${prefix}/plus.css$`] = path.join(__dirname, 'dist/plus.css');
     alias['react$'] = require.resolve('react', {paths: [hostRoot]});
     for (const runtime of ['jsx-runtime', 'jsx-dev-runtime']) {
         alias[`react/${runtime}.js$`] = require.resolve(`react/${runtime}`, {paths: [hostRoot]});

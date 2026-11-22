@@ -40,6 +40,11 @@
       "types": "./dist/turbowarp.d.ts",
       "import": "./dist/turbowarp.js"
     },
+    "./plus": {
+      "types": "./dist/plus.d.ts",
+      "import": "./dist/plus.js"
+    },
+    "./plus.css": "./dist/plus.css",
     "./webpack4": {
       "require": "./webpack4.cjs"
     },

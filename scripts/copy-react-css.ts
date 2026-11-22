@@ -1,3 +1,5 @@
 import {copyFile} from 'node:fs/promises';
 
-await copyFile(new URL('../src/react.css', import.meta.url), new URL('../dist/react.css', import.meta.url));
+for (const name of ['react.css', 'plus.css']) {
+    await copyFile(new URL(`../src/${name}`, import.meta.url), new URL(`../dist/${name}`, import.meta.url));
+}

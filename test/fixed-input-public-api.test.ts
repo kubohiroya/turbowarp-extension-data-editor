@@ -25,15 +25,15 @@ const fixedOptions = () => ({
   }], validationContext: () => ({consumerId: 'owner', nowMs: 0, settings: null})
 });
 
-test('fixed contracts preserve all eight exports, CSS build and webpack4 adapters', async () => {
-  assert.deepEqual(Object.keys(manifest.exports).sort(), ['.', './rjsf', './react', './react/styles.css', './turbowarp', './webpack4', './build-info', './schema'].sort());
+test('fixed contracts preserve the existing exports with the Plus distribution, CSS build and webpack4 adapters', async () => {
+  assert.deepEqual(Object.keys(manifest.exports).sort(), ['.', './rjsf', './react', './react/styles.css', './turbowarp', './plus', './plus.css', './webpack4', './build-info', './schema'].sort());
   assert.deepEqual(manifest.sideEffects, ['**/*.css']);
   assert.deepEqual(readFileSync(join(root, 'src/react.css')), readFileSync(join(root, 'dist/react.css')));
   for (const entry of ['', '/rjsf', '/react', '/turbowarp', '/schema']) assert.ok(await import(packageName + entry));
   const webpack = require(packageName + '/webpack4');
   assert.equal(typeof webpack.withBlockEditorWebpack4, 'function');
   const configured = webpack.withBlockEditorWebpack4({resolve: {alias: {existing: '/existing'}}}, {hostRoot: root});
-  for (const entry of ['', '/rjsf', '/react', '/turbowarp', '/schema']) {
+  for (const entry of ['', '/rjsf', '/react', '/turbowarp', '/schema', '/plus']) {
     assert.ok(existsSync(configured.resolve.alias[`${packageName}${entry}$`]));
   }
   assert.equal(configured.resolve.alias.existing, '/existing');

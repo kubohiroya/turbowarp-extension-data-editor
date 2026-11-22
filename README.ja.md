@@ -86,6 +86,14 @@ GUI ホストは画面と VM を同期し、保存を Undo/Redo 各1回にまと
 GUIにはライフサイクル・Modal/翻訳/テーマの接続を残します。
 詳細は [TurboWarp アダプターAPI](docs/turbowarp-adapter.md) を参照してください。
 
+### TurboWarp Plus 用の設定（`/plus`）
+
+`/plus` は TurboWarp Plus Editor が使う設定です。英語と日本語の文言（`plusBlockEditorTranslations`・
+`fixedMessages`・`dialogMessages`）、公開する機能の選別（`exposeBlockEditorAPI`）、`createService`・
+`attach`（入れ子のブロックを有効にする）・`render` を返す `createPlusBlockEditor({styles})` を持ちます。
+`styles` には、bundler が `/react/styles.css` から読み込んだダイアログの stylesheet を渡し、`/plus.css` は
+global の stylesheet としてページに加えます。class 名は `plusBlockEditorClassNames` です。host は結線だけを行います。
+
 ## 子孫をまとめる階層セッション
 
 [共通基盤 #2](https://github.com/kubohiroya/turbowarp-extension-data-editor/issues/2) の追加 API として、
