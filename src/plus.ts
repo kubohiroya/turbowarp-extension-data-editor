@@ -155,7 +155,10 @@ export const plusBlockEditorClassNames = Object.freeze({
 });
 
 /** Expose every capability provided by the installed artifact, without URL gating. */
-export const exposeBlockEditorAPI = <T extends object>(api: T): T => {
+/** The optional capabilities a host may find on an artifact's registration API. */
+export type PlusBlockEditorCapabilities = {readonly registerSourceEditor?: unknown; readonly registerFixedInputEditor?: unknown};
+
+export const exposeBlockEditorAPI = <T extends object>(api: T): T & PlusBlockEditorCapabilities => {
     const visible: Record<string, unknown> = {...(api as Record<string, unknown>)};
     let changed = false;
     for (const key of ['registerSourceEditor', 'registerFixedInputEditor']) {
