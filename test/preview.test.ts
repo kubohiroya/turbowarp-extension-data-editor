@@ -135,7 +135,7 @@ test('native fixed companion preserves registration authority, numeric/menu save
 });
 
 
-test('aggregate companion snapshots stay tied to each node and unrelated registrations retain the shared scope', t => {
+test('a hierarchy keeps one pane for the subtree, and node forms carry their own drafts', t => {
   const dom = domFor(t);const registry = new EditorRegistry();const shown = [];
   registry.register(definition({opcodes: ['story_scene', 'story_action']}));
   const remove = registry.registerPreview(preview({opcodes: ['story_scene', 'story_action'],
@@ -152,11 +152,41 @@ test('aggregate companion snapshots stay tied to each node and unrelated registr
     const element = dom.window.document.createElement('div');dom.window.document.body.appendChild(element);
     session.getEditor(node.reference.blockId).mount(element);
   }
-  assert.deepEqual(shown.map(x => x.block.blockId), ['block', 'child']);
-  shown[1].context.setDraft({value: 'child-draft'});assert.equal(shown[0].context.getDraft().value, 'old');
+  // The dialog hosts the subtree's preview once; a node's own body is its form alone.
+  assert.deepEqual(shown, []);
+  assert.equal(session.getPreview().extensionId, 'story');
+  assert.deepEqual(session.getNodes().map(node => session.getNodeSnapshot(node.reference.blockId).blockId),
+    ['block', 'child']);
+  assert.equal(session.getNodeSnapshot('missing'), undefined);
+  const childContext = session.getEditor('child');
+  childContext.setDraft({value: 'child-draft'});
+  assert.equal(session.getEditor('block').getDraft().value, 'old');
+  assert.equal(childContext.getSnapshot().blockId, 'child');
   const removeOther = registry.registerPreview({extensionId: 'other', opcodes: ['other_action'], mount: () => () => {}});
   assert.equal(session.getState().status, 'editing');removeOther();assert.equal(session.getState().status, 'editing');
+  // The pane is part of what the session opened with, so losing it invalidates the scope.
   remove();assert.equal(session.getState().status, 'invalidated');
+});
+
+test('a preview-only node still joins the tree with its own companion body', t => {
+  const dom = domFor(t);const registry = new EditorRegistry();const shown = [];
+  registry.register(definition({opcodes: ['story_scene']}));
+  registry.registerPreview(preview({opcodes: ['story_scene', 'story_action'],
+    mount: (_e, _context, block) => {shown.push(block.blockId);return () => {};}}));
+  const root = snapshot();const child = {...snapshot(), blockId: 'child', opcode: 'story_action'};
+  const scope = {...reference, generation: 'project-1', nodes: [
+    {block: root, branches: [{input: 'SUBSTACK', blockIds: ['child']}]}, {block: child, branches: []}
+  ]};
+  const session = registry.openDescendants(reference, {readBlock: () => root, commit() {}, descendants: {
+    capability: 'descendant-editing-v1', readSubtree: () => scope, commitSubtree() {}
+  }});
+  assert(session);
+  for (const node of session.getNodes()) {
+    const element = dom.window.document.createElement('div');dom.window.document.body.appendChild(element);
+    session.getEditor(node.reference.blockId).mount(element);
+  }
+  // `story_action` has no form of its own, so its preview keeps mounting in the node's body.
+  assert.deepEqual(shown, ['child']);
 });
 
 test('native bridge releases hover on leave, opening, project changes, registration changes and disposal', {skip: !nativeAvailable}, t => {

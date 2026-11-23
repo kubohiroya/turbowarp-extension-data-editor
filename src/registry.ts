@@ -159,15 +159,18 @@ export class EditorRegistry {
     const live = port.readSubtree(capturedReference);
     if (!live) return undefined;
     const captured = captureSubtree(live, capturedReference, resolvedLimits);
-    const root = this.#definition(captured.snapshot.nodes[0]!.block.opcode);
+    const rootOpcode = captured.snapshot.nodes[0]!.block.opcode;
+    const root = this.#definition(rootOpcode);
     if (!root || isFixedInputEditor(root)) return undefined;
     return new DescendantSession(captured, port, opcode => {
-      const entry = this.#definition(opcode);
+      // One pane serves the whole hierarchy, so a node that has a form of its own keeps just the
+      // form. A node with only a preview still joins the tree through the composed definition.
+      const entry = this.#opcodes.get(opcode) ?? this.#definition(opcode);
       return entry && !isFixedInputEditor(entry) ? entry : undefined;
     }, listener => {
       this.#changes.add(listener);
       return () => { this.#changes.delete(listener); };
-    }, resolvedLimits);
+    }, resolvedLimits, () => this.#previews.get(rootOpcode));
   }
 
   #notifyChanges(): void {

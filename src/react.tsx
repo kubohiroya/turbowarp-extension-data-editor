@@ -4,7 +4,10 @@ export {default as bindBlockEditorFieldErrors} from './field-errors.js';
 import * as React from 'react';
 import {BlockEditorConflictError} from './types.js';
 import {BlockEditorStructureError} from './descendant-types.js';
-import type {SessionStatus, ValidationIssue, SaveResult} from './types.js';
+import type {
+  BlockPreviewDefinition, BlockPreviewSelected, BlockSnapshot, EditorViewContext, SaveResult,
+  SessionStatus, ValidationIssue
+} from './types.js';
 import type {
   DescendantNodeDescriptor, DescendantNodeEditor, DescendantValidationIssue, DescendantSaveResult
 } from './descendant-types.js';
@@ -26,6 +29,8 @@ export interface DialogSession {
   mount?(container: HTMLElement): () => void;
   getNodes?(): readonly DescendantNodeDescriptor[];
   getEditor?(blockId: string): DescendantNodeEditor | undefined;
+  getNodeSnapshot?(blockId: string): BlockSnapshot | undefined;
+  getPreview?(): BlockPreviewDefinition | undefined;
   save(): Promise<SaveResult | DescendantSaveResult>;
   cancel(): boolean;
   dispose(): boolean;
@@ -96,6 +101,9 @@ let nextBodyId = 0;
 type TreeProps = Pick<BlockEditorDialogProps, 'session' | 'styles' | 'messages' | 'nodeAppearances' | 'nodeLabels'> & {
   readonly disabled: boolean;
   readonly onError: (error: unknown) => void;
+  /** Set when a preview pane beside the tree follows the reader's choice. */
+  readonly selected?: string | undefined;
+  readonly onSelect?: (blockId: string) => void;
 };
 class DescendantTree extends React.Component<TreeProps, {expanded: Set<string>; failedIcons: Set<string>}> {
   private readonly nodes = this.props.session.getNodes!();
@@ -123,6 +131,7 @@ class DescendantTree extends React.Component<TreeProps, {expanded: Set<string>; 
     const expanded = new Set(this.state.expanded);
     for (const step of issue.inputPath) expanded.add(step.blockId);
     expanded.add(issue.reference.blockId);
+    this.props.onSelect?.(issue.reference.blockId);
     this.setState({expanded}, () => {
       if (this.focusFrame !== undefined) cancelAnimationFrame(this.focusFrame);
       this.focusFrame = requestAnimationFrame(() => {
@@ -154,11 +163,18 @@ class DescendantTree extends React.Component<TreeProps, {expanded: Set<string>; 
       '--block-editor-node-colour': appearance.colour,
       '--block-editor-node-tint': appearance.tint
     } as React.CSSProperties;
+    const selected = this.props.selected === id;
     return <section className={styles.treeNode} data-block-editor-node={id} key={id} style={style}
+      {...(this.props.onSelect ? {'data-block-editor-selected': String(selected)} : {})}
       ref={section => { if (section) this.sections.set(id, section); else this.sections.delete(id); }}>
       <h3 className={styles.nodeHeading}>
         <button aria-controls={this.bodyIds.get(id)} aria-expanded={expanded} data-block-editor-toggle={id}
-          disabled={this.props.disabled} type="button" onClick={() => this.toggle(id)}>
+          {...(this.props.onSelect ? {'aria-current': selected ? 'true' : undefined} : {})}
+          disabled={this.props.disabled} type="button" onClick={() => {
+            // Picking a node both opens it and points the shared pane at it.
+            this.props.onSelect?.(id);
+            this.toggle(id);
+          }}>
           <span aria-hidden="true">{expanded ? '▾ ' : '▸ '}</span>
           {appearance.iconURI && !this.state.failedIcons.has(id) ? <img alt="" aria-hidden="true"
             className={styles.nodeIcon} data-block-editor-node-icon={id} draggable={false} src={appearance.iconURI}
@@ -186,11 +202,17 @@ class DescendantTree extends React.Component<TreeProps, {expanded: Set<string>; 
 }
 
 /** The host injects its modal, localized strings and stylesheet mapping; no GUI imports are needed. */
-export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, DialogSessionState & {mountFailed: boolean}> {
+export class BlockEditorDialog extends React.Component<
+  BlockEditorDialogProps,
+  DialogSessionState & {mountFailed: boolean; selected: string | undefined}
+> {
   private mounted = false;
   private unmounting = false;
   private composing = false;
   private body: HTMLDivElement | null = null;
+  private previewHost: HTMLDivElement | null = null;
+  private unmountPreview: (() => void) | undefined;
+  private readonly selectionListeners = new Set<() => void>();
   private tree: DescendantTree | null = null;
   private focusFrame: number | undefined;
   private removeListener = () => {};
@@ -199,7 +221,61 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
   private stopWindow: (() => void) | undefined;
   constructor(props: BlockEditorDialogProps) {
     super(props);
-    this.state = {...props.session.getState(), mountFailed: false};
+    const root = props.session.getNodes?.().find(node => node.inputPath.length === 0);
+    this.state = {
+      ...props.session.getState(), mountFailed: false,
+      selected: root?.reference.blockId
+    };
+  }
+
+  /** One pane serves the whole hierarchy; it reads the selection when it needs it. */
+  private readonly selection = {
+    get: (): BlockPreviewSelected => {
+      const session = this.props.session;
+      const nodes = session.getNodes?.() ?? [];
+      const node = nodes.find(item => item.reference.blockId === this.state.selected) ?? nodes[0];
+      const blockId = node?.reference.blockId;
+      const context = (blockId ? session.getEditor?.(blockId) : undefined) ?? this.rootContext();
+      const snapshot = (blockId ? session.getNodeSnapshot?.(blockId) : undefined) ??
+        context.getSnapshot?.();
+      if (!snapshot) throw new TypeError('Block preview requires a captured snapshot.');
+      return Object.freeze({snapshot, context, depth: node?.inputPath.length ?? 0});
+    },
+    subscribe: (listener: () => void) => {
+      this.selectionListeners.add(listener);
+      return () => {this.selectionListeners.delete(listener);};
+    }
+  };
+
+  private rootContext(): EditorViewContext {
+    const session = this.props.session;
+    const root = session.getNodes?.().find(node => node.inputPath.length === 0);
+    const editor = root ? session.getEditor?.(root.reference.blockId) : undefined;
+    return editor ?? (session as unknown as EditorViewContext);
+  }
+
+  private readonly handleSelect = (blockId: string): void => {
+    if (this.state.selected === blockId) return;
+    this.setState({selected: blockId}, () => {
+      for (const listener of [...this.selectionListeners]) listener();
+    });
+  };
+
+  private readonly handlePreviewHost = (host: HTMLDivElement | null): void => {
+    this.previewHost = host;
+    if (this.mounted) this.mountPreview();
+  };
+
+  private mountPreview(): void {
+    const preview = this.props.session.getPreview?.();
+    if (!preview || !this.previewHost || this.unmountPreview || this.state.mountFailed) return;
+    try {
+      const cleanup = preview.mount(
+        this.previewHost, this.rootContext(), this.selection.get().snapshot, this.selection
+      );
+      if (typeof cleanup !== 'function') throw new TypeError('preview.mount() must return a cleanup function.');
+      this.unmountPreview = cleanup;
+    } catch (error) { this.handleMountError(error); }
   }
   componentDidMount(): void {
     this.mounted = true;
@@ -209,6 +285,7 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
       if (['cancelled', 'disposed', 'invalidated'].includes(state.status)) this.props.onClose();
     });
     this.mountBody();
+    this.mountPreview();
   }
   componentWillUnmount(): void {
     this.unmounting = true;
@@ -217,6 +294,9 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
     this.removeListener();
     this.stopFieldErrors?.();
     this.stopWindow?.();
+    this.selectionListeners.clear();
+    try { this.unmountPreview?.(); }
+    catch (error) { this.props.onError?.(error); }
     try { this.unmountBody?.(); }
     catch (error) { this.props.onError?.(error); }
     finally { this.props.session.dispose(); }
@@ -264,6 +344,8 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
     const {styles, messages, ModalComponent, session} = this.props;
     const saving = this.state.status === 'saving';
     const hierarchy = typeof session.getNodes === 'function';
+    // A hierarchy with a preview keeps one pane beside the tree instead of one inside each node.
+    const pane = hierarchy && !!session.getPreview?.();
     let fixed = false;
     if (session.getFixedInputView && (this.state.status === 'editing' || saving)) {
       try {fixed = Boolean(session.getFixedInputView());} catch {fixed = true;}
@@ -287,10 +369,16 @@ export class BlockEditorDialog extends React.Component<BlockEditorDialogProps, D
           if (this.composing || event.nativeEvent.isComposing || event.keyCode === 229) event.stopPropagation();
         }}>
         <div className={styles.editorBody}>
-          <div ref={this.handleBody}>
-            {hierarchy ? <DescendantTree session={session} styles={styles} messages={messages} disabled={saving}
-              nodeAppearances={this.props.nodeAppearances} nodeLabels={this.props.nodeLabels}
-              onError={this.handleMountError} ref={tree => { this.tree = tree; }} /> : null}
+          <div className={pane ? styles.hierarchyLayout : undefined}
+            {...(pane ? {'data-block-editor-hierarchy-layout': ''} : {})}>
+            <div ref={this.handleBody}>
+              {hierarchy ? <DescendantTree session={session} styles={styles} messages={messages} disabled={saving}
+                nodeAppearances={this.props.nodeAppearances} nodeLabels={this.props.nodeLabels}
+                {...(pane ? {selected: this.state.selected, onSelect: this.handleSelect} : {})}
+                onError={this.handleMountError} ref={tree => { this.tree = tree; }} /> : null}
+            </div>
+            {pane ? <div className={styles.previewColumn} data-block-preview-visual=""
+              ref={this.handlePreviewHost} /> : null}
           </div>
           <div aria-live="polite" className={styles.errors} role="status">
             {saving ? messages.saving : null}

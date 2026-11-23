@@ -55,7 +55,12 @@ export function withBlockPreview(original: EditorDefinition | undefined, preview
         if (typeof cleanup !== 'function') throw new TypeError('mount() must return a cleanup function.');
         removeForm = cleanup;
       }
-      const cleanup = preview.mount(visual, context, snapshot);
+      // One block, one selection: a preview can read it through the same surface either way.
+      const selection = Object.freeze({
+        get: () => Object.freeze({snapshot, context, depth: 0}),
+        subscribe: () => () => {}
+      });
+      const cleanup = preview.mount(visual, context, snapshot, selection);
       if (typeof cleanup !== 'function') throw new TypeError('preview.mount() must return a cleanup function.');
       removePreview = cleanup;
     } catch (error) {

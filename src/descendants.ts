@@ -10,7 +10,8 @@ import type {
   SubtreeArgumentChange, SubtreeSnapshot
 } from './descendant-types.js';
 import type {
-  BlockReference, BlockSnapshot, EditorDefinition, JsonObject, SessionState, ValidationIssue
+  BlockPreviewDefinition, BlockReference, BlockSnapshot, EditorDefinition, JsonObject, SessionState,
+  ValidationIssue
 } from './types.js';
 
 interface DraftRecord {
@@ -73,7 +74,10 @@ export class DescendantSession {
   readonly #lookup: (opcode: string) => EditorDefinition | undefined;
   readonly #bindings = new Map<string, EditorDefinition | undefined>();
   readonly #records = new Map<string, DraftRecord>();
+  readonly #snapshots = new Map<string, BlockSnapshot>();
   readonly #nodes: readonly DescendantNodeDescriptor[];
+  readonly #resolvePreview: (() => BlockPreviewDefinition | undefined) | undefined;
+  readonly #preview: BlockPreviewDefinition | undefined;
   readonly #listeners = new Set<() => void>();
   readonly #detach = new Set<() => void>();
   readonly #abort = new AbortController();
@@ -86,12 +90,16 @@ export class DescendantSession {
     captured: CapturedSubtree, host: DescendantEditorHost,
     lookup: (opcode: string) => EditorDefinition | undefined,
     subscribeRegistry: (listener: () => void) => () => void,
-    limits: Required<DescendantLimits>
+    limits: Required<DescendantLimits>,
+    resolvePreview?: () => BlockPreviewDefinition | undefined
   ) {
     this.#snapshot = captured.snapshot;
     this.#host = host;
     this.#lookup = lookup;
     this.#limits = limits;
+    this.#resolvePreview = resolvePreview;
+    this.#preview = resolvePreview?.();
+    for (const node of captured.snapshot.nodes) this.#snapshots.set(node.block.blockId, node.block);
     for (const node of captured.snapshot.nodes) this.#bindings.set(node.block.opcode, lookup(node.block.opcode));
     this.#nodes = Object.freeze(captured.snapshot.nodes.map(node => {
       const definition = this.#bindings.get(node.block.opcode);
@@ -131,6 +139,13 @@ export class DescendantSession {
   get generation(): string { return this.#snapshot.generation; }
   getNodes(): readonly DescendantNodeDescriptor[] { return this.#nodes; }
   getEditor(blockId: string): DescendantNodeEditor | undefined { return this.#records.get(blockId)?.editor; }
+  /** Every node's captured block, including the ones with no form of their own. */
+  getNodeSnapshot(blockId: string): BlockSnapshot | undefined { return this.#snapshots.get(blockId); }
+  /**
+   * The preview registered for the opened block. In a hierarchy the dialog hosts it once for the
+   * whole subtree, so the node editors stay plain forms.
+   */
+  getPreview(): BlockPreviewDefinition | undefined { return this.#preview; }
 
   getState(): DescendantSessionState {
     const issues = Object.freeze([...this.#records.values()].flatMap(record => record.issues.map(issue =>
@@ -295,6 +310,8 @@ export class DescendantSession {
   #assertOpen(): void { if (!this.#isOpen()) throw new Error('The session is closed.'); }
   #assertEditable(): void { if (this.#status !== 'editing') throw new Error('The session is not editable.'); }
   #bindingsCurrent(): boolean {
+    // The pane the dialog hosts is part of what this session was opened with.
+    if (this.#resolvePreview && this.#resolvePreview() !== this.#preview) return false;
     return [...this.#bindings].every(([opcode, definition]) => this.#lookup(opcode) === definition);
   }
   #checkBindings(): void {

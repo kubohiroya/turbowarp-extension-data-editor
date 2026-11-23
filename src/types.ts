@@ -101,10 +101,31 @@ export interface EditorDescriptor {
 }
 
 /** Optional presentation companion. It shares the draft and lifetime of the existing form. */
+/** What the dialog is showing: in a hierarchy, the node the reader selected in the tree. */
+export interface BlockPreviewSelected {
+  readonly snapshot: BlockSnapshot;
+  /** The selected node's own editing context, or the dialog's when a node has no form. */
+  readonly context: EditorViewContext;
+  /** How deep the node sits under the opened block; 0 is the opened block itself. */
+  readonly depth: number;
+}
+export interface BlockPreviewSelection {
+  get(): BlockPreviewSelected;
+  subscribe(listener: () => void): () => void;
+}
 export interface BlockPreviewDefinition {
   readonly extensionId: string;
   readonly opcodes: readonly string[];
-  mount(container: HTMLElement, context: EditorViewContext, snapshot: BlockSnapshot): () => void;
+  /**
+   * `selection` follows the tree in a hierarchy, where one pane serves the whole dialog. A
+   * preview that ignores it keeps showing the block the dialog was opened on.
+   */
+  mount(
+    container: HTMLElement,
+    context: EditorViewContext,
+    snapshot: BlockSnapshot,
+    selection?: BlockPreviewSelection
+  ): () => void;
   hover?(anchor: HTMLElement | SVGElement, snapshot: BlockSnapshot): () => void;
 }
 
