@@ -213,6 +213,10 @@ test('companion layout mounts real form controls in an independent column and re
   const layout = mount.querySelector('[data-block-preview-layout]');assert(layout);
   assert.equal(input.parentElement, layout.querySelector('[data-block-preview-form]'));
   assert.equal(button.parentElement, layout.querySelector('[data-block-preview-visual]'));
+  // The form takes the left column and leads the narrow layout; the preview follows it.
+  assert.deepEqual([...layout.children].map(child => child.dataset.blockPreviewForm === '' ? 'form' : 'visual'), ['form', 'visual']);
+  assert.equal(layout.firstElementChild, layout.querySelector('[data-block-preview-form]'));
+  assert.equal(layout.lastElementChild, layout.querySelector('[data-block-preview-visual]'));
   input.value = 'edited with preview visible';input.dispatchEvent(new dom.window.Event('input'));
   assert.equal(button.dataset.value, 'edited with preview visible');assert.equal(context.getDraft().value, input.value);
   assert.equal(f.writes.length, 0);s.cancel();assert.equal(mount.childNodes.length, 0);

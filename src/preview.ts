@@ -43,7 +43,8 @@ export function withBlockPreview(original: EditorDefinition | undefined, preview
     const form = document.createElement('div');
     form.dataset.blockPreviewForm = '';
     form.hidden = typeof original?.mount !== 'function';
-    layout.append(visual, form);
+    // The form leads in both layouts: the left column when wide, and the first block when narrow.
+    layout.append(form, visual);
     container.append(style, layout);
     const removeLayout = () => { layout.remove(); style.remove(); };
     let removeForm: (() => void) | undefined;
