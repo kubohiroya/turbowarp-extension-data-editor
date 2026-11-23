@@ -37,6 +37,43 @@
     min-width: 0;
 }
 
+/*
+ * A hierarchy with a preview: the tree on the left, one pane on the right. The pane's own contents
+ * belong to whoever registered the preview, so only the column is stated here.
+ */
+.hierarchy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    min-width: 0;
+    align-items: start;
+}
+
+.hierarchy-layout > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.preview-column {
+    min-width: 0;
+}
+
+@media (min-width: 900px) {
+    .hierarchy-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .preview-column {
+        position: sticky;
+        top: 0;
+        align-self: start;
+    }
+}
+
+[data-block-editor-selected="true"].tree-node {
+    border-color: var(--block-editor-text, #202329);
+}
+
 .tree-node {
     /* Reset these on every node so missing metadata never inherits a parent's colour. */
     --block-editor-node-colour: var(--block-editor-border, rgba(0, 0, 0, 0.15));
