@@ -117,6 +117,9 @@ pnpm test
 ```
 
 `pnpm test` は型宣言を含むビルド後、コアと標準フォームのテストを実行します。
+
+`test/editor-icon-service.test.ts` は [Editor #741](https://github.com/kubohiroya/turbowarp-plus-editor/issues/741) のアイコンのポインター・キー操作とスキーマ検証・直列化の2件を引き継ぎます。既存の `pnpm test` と CI が GUI checkout なしで実行します。Editor には VM ごとのサービス共有の結線確認を残し、移管先の CI 成功とマージまでは元テストを保持します。切り戻しは追加テストと文書を revert し、Editor 側で削除済みなら元テストも復元します。元の GPL-3.0-or-later は `test/LICENSE.GPL-3.0` とともにテストに保持し、テストとそのライセンスは npm 配布対象外です。ライブラリ本体は MPL-2.0 のままです。
+
 `pnpm run test:runtime` は、最小 editor runtime（`@kubohiroya/turbowarp-plus-editor-test-runtime`）の上で、TurboWarp Plus Editor が固定する VM と Scratch Blocks を使い、Editor をビルドせずにエディターを Chromium で試します。試験用の拡張機能が固定入力のエディターを登録し、ブロックのアイコンからダイアログを開いて、検証・保存・本物のドロップダウンの操作を確かめます。先に Playwright の Chromium を入れてください（`pnpm exec playwright install chromium`）。
 パッケージは ESM です。ブラウザには ES2022 の組み込み API が必要です。
 標準フォームの React / ReactDOM peer は 16.14 / 17 / 18。GUI は既存の 16.14 を共有します。

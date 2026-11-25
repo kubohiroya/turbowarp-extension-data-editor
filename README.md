@@ -116,6 +116,9 @@ pnpm test
 ```
 
 `pnpm test` builds the package, including type declarations, then runs the core and standard form tests.
+
+`test/editor-icon-service.test.ts` carries two tests from [Editor #741](https://github.com/kubohiroya/turbowarp-plus-editor/issues/741): icon pointer/keyboard activation and schema-only validation/serialization. The existing `pnpm test` and CI run them without a GUI checkout. Editor keeps its per-VM service wiring test; its originals stay until this migration is merged with successful CI. Revert the added tests and documentation to undo the migration, restoring the Editor originals if they have been removed. These migrated tests retain GPL-3.0-or-later (see `test/LICENSE.GPL-3.0`); tests and this license are excluded from the npm archive. The library remains MPL-2.0.
+
 `pnpm run test:runtime` runs the editors on the TurboWarp Plus Editor's pinned VM and Scratch Blocks in Chromium, through the minimal editor runtime (`@kubohiroya/turbowarp-plus-editor-test-runtime`), without building the Editor: a fixture extension registers a fixed input editor, and the tests open its dialog from the block's icon, validate, save and use the native dropdown. Install Chromium for Playwright first (`pnpm exec playwright install chromium`).
 The package uses ESM. Browsers need ES2022 built-in APIs.
 The standard form supports React / ReactDOM peers 16.14, 17, and 18. The GUI shares its existing React 16.14 installation.
