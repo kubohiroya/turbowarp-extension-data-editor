@@ -1,6 +1,14 @@
 allowBuilds:
   esbuild: true
+  # The VM's legacy webpack dependency has an unused native file watcher.
+  fsevents@1.2.13: false
+  # Use the checked-in browser artifacts instead of the unused dist/vertical.js entry.
+  'scratch-blocks@https://codeload.github.com/TurboWarp/scratch-blocks/tar.gz/a07fa8f7e65ff4c54a15034c4cea1e53935898a1': false
 minimumReleaseAgeExclude:
   - '@kubohiroya/turbowarp-plus-editor-host@0.1.0'
   - '@kubohiroya/turbowarp-plus-editor-test-runtime-blocks@0.1.0 || 0.1.1'
   - '@kubohiroya/turbowarp-plus-editor-test-runtime@0.2.0 || 0.3.0 || 0.3.1 || 0.3.2'
+# The test-only VM depends on a Git-hosted parser; keep that edge immutable.
+blockExoticSubdeps: false
+overrides:
+  'scratch-vm>scratch-parser': 'github:TurboWarp/scratch-parser#f0d650c6d76106c792969bc8e402dd81d3afbeac'
