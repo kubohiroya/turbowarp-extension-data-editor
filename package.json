@@ -87,6 +87,8 @@
     "jsdom": "^26.1.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
+    "react-intl": "2.9.0",
+    "react-modal": "3.9.1",
     "scratch-blocks": "github:TurboWarp/scratch-blocks#a07fa8f7e65ff4c54a15034c4cea1e53935898a1",
     "scratch-render-fonts": "github:TurboWarp/scratch-render-fonts#7b6768fc6dfef6b343a06f992587b74807043961",
     "scratch-vm": "github:kubohiroya/scratch-vm#f3d38110106e5d22277b7585ccf24fc51e035531",

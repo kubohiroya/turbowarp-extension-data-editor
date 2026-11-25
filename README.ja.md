@@ -126,6 +126,10 @@ pnpm test
 
 Editor には実 GUI モーダル、VM ごとのサービス共有、固定入力・Source/Form の GUI 接続確認を残し、移管先の CI 成功とマージ後に5ファイルの重複を削除します。切り戻しは Editor の元テストを復元してから、この追加テスト・devDependencies・pnpm 設定と文書を revert します。移管テストと fixture は元の GPL-3.0-or-later（`test/LICENSE.GPL-3.0`）を保持し、GPL の Scratch Blocks を含む開発用依存とともに npm 配布対象外です。ライブラリ本体は MPL-2.0 のままです。
 
+`test/editor-block-modal.test.ts` は #741 のモーダル機能テスト17件を引き継ぎます。保存・非同期検証・IME、階層の遅延表示・見た目、実 RJSF のフィールド・グループ・配列のエラー表示を、実 ReactModal の portal と公開 `createPlusBlockEditor().render()` で検証します。検証本体とセッション fixture を保持し、GUI ラッパーのコンパイルと CSS import だけを公開 API・空のスタイル表へ置き換えます（元の Node テストも asset hook で空のスタイル表を使います）。GUI checkout は不要です。ReactModal `3.9.1` と React Intl `2.9.0` は、Editor `7b74a0d` の固定 GUI と同じ版の devDependencies です。
+
+既存の `pnpm test` と CI が17件を skip せず実行します。Editor には実 GUI ラッパーが portal 内の本体を1回だけ mount する接続確認を残し、移管先の CI 成功とマージ後に重複を除去します。移管テストは GPL-3.0-or-later（`test/LICENSE.GPL-3.0`）を保持し、npm 配布対象外です。製品の依存・実装・版と pnpm の方針設定は変えません。切り戻しは Editor の元テストを復元してから、追加テスト・テスト専用依存・lockfile・文書を revert します。
+
 `pnpm run test:runtime` は、最小 editor runtime（`@kubohiroya/turbowarp-plus-editor-test-runtime`）の上で、TurboWarp Plus Editor が固定する VM と Scratch Blocks を使い、Editor をビルドせずにエディターを Chromium で試します。試験用の拡張機能が固定入力のエディターを登録し、ブロックのアイコンからダイアログを開いて、検証・保存・本物のドロップダウンの操作を確かめます。先に Playwright の Chromium を入れてください（`pnpm exec playwright install chromium`）。
 パッケージは ESM です。ブラウザには ES2022 の組み込み API が必要です。
 標準フォームの React / ReactDOM peer は 16.14 / 17 / 18。GUI は既存の 16.14 を共有します。
