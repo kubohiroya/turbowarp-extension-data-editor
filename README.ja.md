@@ -120,6 +120,12 @@ pnpm test
 
 `test/editor-icon-service.test.ts` は [Editor #741](https://github.com/kubohiroya/turbowarp-plus-editor/issues/741) のアイコンのポインター・キー操作とスキーマ検証・直列化の2件を引き継ぎます。既存の `pnpm test` と CI が GUI checkout なしで実行します。Editor には VM ごとのサービス共有の結線確認を残し、移管先の CI 成功とマージまでは元テストを保持します。切り戻しは追加テストと文書を revert し、Editor 側で削除済みなら元テストも復元します。元の GPL-3.0-or-later は `test/LICENSE.GPL-3.0` とともにテストに保持し、テストとそのライセンスは npm 配布対象外です。ライブラリ本体は MPL-2.0 のままです。
 
+`test/editor-block-{host,source-host,descendant-host,bridge,appearance}.test.ts` は同じ #741 の機能テスト38件を引き継ぎます。検証本体を維持し、fixture の参照先だけを GUI checkout から `test/fixtures/editor-block-host.ts` へ変更します。実 VM、Scratch Blocks の browser artifacts、Storage によって、変更の確定・競合・Undo/Redo、子孫編集、SB3 の保存・再読込、編集アイコンと公開 bridge API を検証します。既存の `pnpm test` と CI が全38件を skip せず実行します。
+
+テスト専用の VM は Editor `e954848` の固定 `f3d3811`、Scratch Blocks は固定 GUI が参照する `develop-builds` の調査時の先端 `a07fa8f` に固定しています。VM の浮動 parser 参照も `f0d650c`、SVG renderer peer は `1.1.0`、そのフォント peer は `7b6768f` へ固定します。この Git の推移依存に必要な `blockExoticSubdeps: false` を設定し、lockfile に解決先を記録します。不要な Scratch Blocks の prepare と旧 native file watcher の build は明示的に禁止し、既存の build script 許可は広げません。製品の依存・バージョン・実装は変更しません。
+
+Editor には実 GUI モーダル、VM ごとのサービス共有、固定入力・Source/Form の GUI 接続確認を残し、移管先の CI 成功とマージ後に5ファイルの重複を削除します。切り戻しは Editor の元テストを復元してから、この追加テスト・devDependencies・pnpm 設定と文書を revert します。移管テストと fixture は元の GPL-3.0-or-later（`test/LICENSE.GPL-3.0`）を保持し、GPL の Scratch Blocks を含む開発用依存とともに npm 配布対象外です。ライブラリ本体は MPL-2.0 のままです。
+
 `pnpm run test:runtime` は、最小 editor runtime（`@kubohiroya/turbowarp-plus-editor-test-runtime`）の上で、TurboWarp Plus Editor が固定する VM と Scratch Blocks を使い、Editor をビルドせずにエディターを Chromium で試します。試験用の拡張機能が固定入力のエディターを登録し、ブロックのアイコンからダイアログを開いて、検証・保存・本物のドロップダウンの操作を確かめます。先に Playwright の Chromium を入れてください（`pnpm exec playwright install chromium`）。
 パッケージは ESM です。ブラウザには ES2022 の組み込み API が必要です。
 標準フォームの React / ReactDOM peer は 16.14 / 17 / 18。GUI は既存の 16.14 を共有します。
