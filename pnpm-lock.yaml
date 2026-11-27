@@ -43,8 +43,8 @@ importers:
         specifier: ^3.12.0
         version: 3.12.0
       '@turbowarp/scratch-storage':
-        specifier: 2.0.0
-        version: 2.0.0(webpack@4.47.0)
+        specifier: 2.2.0
+        version: 2.2.0(webpack@4.47.0)
       '@turbowarp/scratch-svg-renderer':
         specifier: 1.1.0
         version: 1.1.0(scratch-render-fonts@https://codeload.github.com/TurboWarp/scratch-render-fonts/tar.gz/7b6768fc6dfef6b343a06f992587b74807043961)
@@ -70,8 +70,8 @@ importers:
         specifier: 2.9.0
         version: 2.9.0(prop-types@15.8.1)(react@16.14.0)
       react-modal:
-        specifier: 3.9.1
-        version: 3.9.1(react-dom@16.14.0(react@16.14.0))(react@16.14.0)
+        specifier: 3.16.3
+        version: 3.16.3(react-dom@16.14.0(react@16.14.0))(react@16.14.0)
       scratch-blocks:
         specifier: github:TurboWarp/scratch-blocks#a07fa8f7e65ff4c54a15034c4cea1e53935898a1
         version: https://codeload.github.com/TurboWarp/scratch-blocks/tar.gz/a07fa8f7e65ff4c54a15034c4cea1e53935898a1
@@ -326,8 +326,8 @@ packages:
   '@turbowarp/sb3fix@0.6.0':
     resolution: {integrity: sha512-Xs69hkrO06YRyMzIQu5+njHdPT8gOAiJ3aGgW4GE4nCXZNPS/1m+raXxPnSS8iESMlB3v8waJkMCYHYpjbao0Q==}
 
-  '@turbowarp/scratch-storage@2.0.0':
-    resolution: {integrity: sha512-Qi/wpKuf9Vd1FKYuwbh9NY4aB6nxh9V7ulQ03TFsWxZJfV1GOL8NiFRQMGFBDda00kUjWr5+f/eobbRAOqZpUg==}
+  '@turbowarp/scratch-storage@2.2.0':
+    resolution: {integrity: sha512-GLWpOhxyk4XujNeM4kDpiX6GGKWa3a3kcSZd6oODbz6CIud826zwG4wz5oQGgT1PSAwbqa30909XUp5tDpItLg==}
 
   '@turbowarp/scratch-svg-renderer@1.1.0':
     resolution: {integrity: sha512-UPSUNKfR9f73ZNgjYdxsz5yheZYO/EiKE3Wji31thRVDGzOJOROQXcFicl/1oDWkMII4FvSLylGAw6/MPpoXqg==}
@@ -1612,11 +1612,11 @@ packages:
   react-lifecycles-compat@3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
 
-  react-modal@3.9.1:
-    resolution: {integrity: sha512-k+TUkhGWpIVHLsEyjNmlyOYL0Uz03fNZvlkhCImd1h+6fhNgTi6H6jexVXPVhD2LMMDzJyfugxMN+APN/em+eQ==}
+  react-modal@3.16.3:
+    resolution: {integrity: sha512-yCYRJB5YkeQDQlTt17WGAgFJ7jr2QYcWa1SHqZ3PluDmnKJ/7+tVU+E6uKyZ0nODaeEj+xCpK4LcSnKXLMC0Nw==}
     peerDependencies:
-      react: ^0.14.0 || ^15.0.0 || ^16
-      react-dom: ^0.14.0 || ^15.0.0 || ^16
+      react: ^0.14.0 || ^15.0.0 || ^16 || ^17 || ^18 || ^19
+      react-dom: ^0.14.0 || ^15.0.0 || ^16 || ^17 || ^18 || ^19
 
   react@16.14.0:
     resolution: {integrity: sha512-0X2CImDkJGApiAlcf0ODKIneSwBPhqJawOa5wCtKbu7ZECrmS26NvtSILynQ66cgkT/RJ4LidJOc3bUESwmU8g==}
@@ -2271,14 +2271,13 @@ snapshots:
     dependencies:
       '@turbowarp/jszip': 4.0.0
 
-  '@turbowarp/scratch-storage@2.0.0(webpack@4.47.0)':
+  '@turbowarp/scratch-storage@2.2.0(webpack@4.47.0)':
     dependencies:
       '@babel/runtime': 7.21.0
       '@turbowarp/nanolog': 0.2.0
       arraybuffer-loader: 1.0.8
       base64-js: 1.3.0
       cross-fetch: 3.1.5
-      js-md5: 0.7.3
       worker-loader: 2.0.0(webpack@4.47.0)
     transitivePeerDependencies:
       - encoding
@@ -3844,7 +3843,7 @@ snapshots:
 
   react-lifecycles-compat@3.0.4: {}
 
-  react-modal@3.9.1(react-dom@16.14.0(react@16.14.0))(react@16.14.0):
+  react-modal@3.16.3(react-dom@16.14.0(react@16.14.0))(react@16.14.0):
     dependencies:
       exenv: 1.2.2
       prop-types: 15.8.1
